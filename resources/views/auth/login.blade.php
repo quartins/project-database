@@ -75,5 +75,18 @@
         </div>
     </main>
 
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        // เคลียร์ข้อมูล cart ที่ค้างอยู่ใน localStorage ทุกครั้งที่มาหน้า login
+        localStorage.removeItem("cartItems");
+        localStorage.removeItem("cartCount");
+
+        // ถ้ามี session จากหน้า cart ค้างอยู่ใน Browser ก็ล้างด้วย
+        sessionStorage.removeItem("cartItems");
+        sessionStorage.removeItem("cartCount");
+    });
+</script>
+
+
 </body>
 </html>

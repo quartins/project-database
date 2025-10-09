@@ -13,10 +13,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
+        //  เรียกใช้ Seeder ทั้งหมด
+        $this->call([
+            CategorySeeder::class,
+            ProductSeeder::class,
+        ]);
 
-        User::factory()->create([
-            'name' => 'Test User',
+        //  เพิ่ม user สำหรับทดสอบ login
+       User::factory()->create([
+            'username' => 'testuser',
+            'firstname' => 'Test',
+            'lastname' => 'User',
             'email' => 'test@example.com',
         ]);
     }
