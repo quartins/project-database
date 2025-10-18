@@ -7,15 +7,21 @@ Laravel project for project-database.
 ```
 
 Up product in database:
+```bash
 ./vendor/bin/sail artisan migrate:fresh --seed
-  
+```
 
-Up git (if in vs code use wsl) -  
+Up git (if in vs code use wsl) - 
+```bash
 git config --global user.name "Your Name"
-git config --global user.email "your_email@example.com"
+```
 
+```bash
+git config --global user.email "your_email@example.com"
+```
 
 Start the development server:
+```bash
 ./vendor/bin/sail npm run dev
-
+```
 
