@@ -28,23 +28,23 @@
                         {{--  collection --}}
                         <div class="grid grid-cols-5 gap-6 text-center">
                             <a href="/collection/kitty" class="flex flex-col items-center hover:scale-105 transition">
-                                <img src="{{ asset('collection/kitty/kitty1.png') }}" class="w-20 h-20 object-contain mb-2">
+                                <img src="{{ asset('collections/kitty/kitty1.png') }}" class="w-20 h-20 object-contain mb-2">
                                 <span class="text-sm font-semibold text-[#7B4B3A]">Kitty</span>
                             </a>
                             <a href="/collection/mymelody" class="flex flex-col items-center hover:scale-105 transition">
-                                <img src="{{ asset('collection/mymelody/mymelody1.png') }}" class="w-20 h-20 object-contain mb-2">
+                                <img src="{{ asset('collections/mymelody/mymelody1.png') }}" class="w-20 h-20 object-contain mb-2">
                                 <span class="text-sm font-semibold text-[#7B4B3A]">My Melody</span>
                             </a>
                             <a href="/collection/kuromi" class="flex flex-col items-center hover:scale-105 transition">
-                                <img src="{{ asset('collection/kuromi/kuromi1.png') }}" class="w-20 h-20 object-contain mb-2">
+                                <img src="{{ asset('collections/kuromi/kuromi1.png') }}" class="w-20 h-20 object-contain mb-2">
                                 <span class="text-sm font-semibold text-[#7B4B3A]">Kuromi</span>
                             </a>
                             <a href="/collection/hirono" class="flex flex-col items-center hover:scale-105 transition">
-                                <img src="{{ asset('collection/hirono/hirono1.png') }}" class="w-20 h-20 object-contain mb-2">
+                                <img src="{{ asset('collections/hirono/hirono1.png') }}" class="w-20 h-20 object-contain mb-2">
                                 <span class="text-sm font-semibold text-[#7B4B3A]">Hirono</span>
                             </a>
                             <a href="/collection/twinkle" class="flex flex-col items-center hover:scale-105 transition">
-                                <img src="{{ asset('collection/twinkle/twinkle1.png') }}" class="w-20 h-20 object-contain mb-2">
+                                <img src="{{ asset('collections/twinkle/twinkle1.png') }}" class="w-20 h-20 object-contain mb-2">
                                 <span class="text-sm font-semibold text-[#7B4B3A]">Twinkle</span>
                             </a>
                         </div>

@@ -12,8 +12,8 @@ use App\Http\Controllers\CollectionController;
 Route::get('/', [ProductController::class, 'index'])->name('home');
 
 // หน้า Collection 
-Route::get('/collection', [CollectionController::class, 'index'])->name('collection.index');
-Route::get('/collection/{category}', [CollectionController::class, 'show'])->name('collection.show');
+Route::get('/collections', [CollectionController::class, 'index'])->name('collection.index');
+Route::get('/collections/{category}', [CollectionController::class, 'show'])->name('collection.show');
 
 
 // --- โซนสำหรับสมาชิกเท่านั้น (ต้องล็อกอิน) ---
