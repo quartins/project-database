@@ -4,6 +4,8 @@
     </IfModule>
 
     RewriteEngine On
+    # บังคับให้คำขอ /collection และ /collection/{slug} วิ่งไปหา Laravel เสมอ
+    RewriteRule ^collection(/[\w-]+)?/?$ index.php [L]
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
