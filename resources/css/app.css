@@ -1,11 +1,53 @@
-@import 'tailwindcss';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
-@source '../../storage/framework/views/*.php';
-@source '../**/*.blade.php';
-@source '../**/*.js';
 
-@theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-        'Segoe UI Symbol', 'Noto Color Emoji';
+.mystery-quest-regular {
+  font-family: "Mystery Quest", system-ui;
+  font-weight: 400;
+  font-style: normal;
+}
+
+
+/* Custom Checkbox (in cart page) */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid #7B4B3A;
+  border-radius: 4px;
+  cursor: pointer;
+  position: relative;
+  background-color: #fff;
+  transition: all 0.2s ease-in-out;
+}
+
+/*  Hover effect */
+input[type="checkbox"]:hover {
+  box-shadow: 0 0 0 3px rgba(123, 75, 58, 0.2);
+}
+
+input[type="checkbox"]:focus,
+input[type="checkbox"]:active {
+  outline: none !important;
+  box-shadow: 0 0 0 3px rgba(123, 75, 58, 0.4); 
+  border-color: #7B4B3A !important;
+}
+
+
+/*  Checked state */
+input[type="checkbox"]:checked {
+  background-color: #7B4B3A !important;
+  border-color: #7B4B3A !important;
+}
+
+input[type="checkbox"]:checked::after {
+  content: "✔";
+  color: #fff;
+  font-size: 0.7rem;
+  position: absolute;
+  top: -1px;
+  left: 2px;
 }
