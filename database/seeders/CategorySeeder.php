@@ -11,7 +11,7 @@ class CategorySeeder extends Seeder
     {
         Category::create([
             'name' => 'Kitty',
-            'image_url' => 'collection/kitty/kitty1.png', // เพิ่ม Path รูปภาพหลักของหมวดหมู่
+            'image_url' => 'collection/kitty/kitty1.png', 
         ]);
         Category::create([
             'name' => 'My Melody',
