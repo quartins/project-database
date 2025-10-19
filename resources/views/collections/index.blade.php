@@ -1,33 +1,32 @@
-<x-app-layout>
+@extends('layouts.app')
+
+@section('content')
+    
     <div class="bg-white">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
             
-            {{-- Grid Container --}}
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 sm:gap-8">
+            {{-- Grid Container สำหรับจัดเรียงการ์ด --}}
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
 
                 {{-- วนลูปเพื่อแสดง Category Card แต่ละอัน --}}
                 @foreach ($categories as $category)
                 <a href="{{ route('collection.show', $category) }}" 
-                   class="group block p-2 sm:p-4 bg-white border border-gray-200 rounded-xl shadow-sm 
-                          transition-all duration-300 ease-in-out 
-                          hover:shadow-lg hover:-translate-y-1">
+                   class="group block p-5 bg-white border border-gray-300 rounded-lg shadow-sm 
+                          transition duration-300 ease-in-out 
+                          hover:shadow-xl hover:-translate-y-1 text-center">
                     
-                    {{-- Image Container --}}
-                    <div class="aspect-square bg-pink-50 rounded-lg overflow-hidden mb-4">
-                        <img src="{{ asset($category->image_url) }}" 
-                             alt="{{ $category->name }}" 
-                             class="w-full h-full object-contain transition-transform duration-300 group-hover:scale-110">
-                    </div>
+                    {{-- รูปภาพ --}}
+                    <img src="{{ asset($category->image_url) }}" 
+                         alt="{{ $category->name }}" 
+                         class="w-40 h-40 mx-auto object-contain mb-4">
                     
-                    {{-- Category Name --}}
-                    <div class="text-center">
-                        <h3 class="text-md sm:text-lg font-semibold text-gray-800">{{ $category->name }}</h3>
-                    </div>
+                    {{-- ชื่อ Category --}}
+                    <h3 class="text-gray-800 font-medium mb-2">{{ $category->name }}</h3>
                 </a>
                 @endforeach
-                {{-- จบการ์ด --}}
                 
             </div>
         </div>
     </div>
-</x-app-layout>
+
+@endsection
