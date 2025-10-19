@@ -14,7 +14,7 @@
         <!-- Scripts / CSS -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="antialiased">
+    <body class="antialiased font-serif">
         @include('layouts.header')
         @include('layouts.navigation')
 
@@ -45,6 +45,47 @@
                 })
                 .catch(() => cartCountEl.classList.add("hidden"));
         });
+
+        window.addToCart = function (productId) {
+            fetch("{{ route('cart.add') }}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": "{{ csrf_token() }}" // ส่ง Token ป้องกันการโจมตี
+                },
+                body: JSON.stringify({ product_id: productId })
+            })
+            .then(res => {
+                if (res.status === 401) {
+                    // ถ้า user ยังไม่ login ให้เด้งไปหน้า login
+                    window.location.href = "{{ route('login') }}";
+                    return;
+                }
+                if (!res.ok) { throw new Error('Network response was not ok'); }
+                return res.json();
+            })
+            .then(data => {
+                if (data?.cart_count !== undefined) {
+                    const cartCountEl = document.getElementById("cart-count");
+
+                    // อัปเดตตัวเลขบนไอคอนตะกร้า
+                    cartCountEl.textContent = data.cart_count;
+                    cartCountEl.classList.remove("hidden");
+
+                    // เพิ่มเอฟเฟกต์เด้งเพื่อเป็น Feedback
+                    const cartIcon = document.getElementById("cart-icon");
+                    if (cartIcon) {
+                        cartIcon.classList.add("animate-bounce");
+                        setTimeout(() => cartIcon.classList.remove("animate-bounce"), 600);
+                    }
+                }
+            })
+            .catch(err => {
+                console.error("Add to cart failed:", err);
+                alert('Failed to add product to cart.');
+            });
+        };
+        
     </script>
     </body>
 </html>

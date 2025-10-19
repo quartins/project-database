@@ -29,4 +29,54 @@
         </div>
     </div>
 
+    {{-- SCRIPT SECTION --}}
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const searchInput = document.getElementById("search-box");
+            const products = document.querySelectorAll(".product-card");
+
+            if (searchInput) {
+                searchInput.addEventListener("input", function() {
+                    const query = this.value.toLowerCase().replace(/\s+/g, "");
+                    products.forEach(product => {
+                        const name = product.dataset.name.toLowerCase();
+                        product.style.display = name.includes(query) ? "block" : "none";
+                    });
+                });
+            }
+
+            window.addToCart = function (productId) {
+                fetch("/cart/add", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                    },
+                    body: JSON.stringify({ product_id: productId })
+                })
+                .then(res => {
+                    if (res.status === 401) {
+                        window.location.href = "/login";
+                        return;
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    if (data?.cart_count !== undefined) {
+                        const cartCountEl = document.getElementById("cart-count");
+                        const cartIconEl = document.getElementById("cart-icon");
+                        cartCountEl.textContent = data.cart_count;
+                        cartCountEl.classList.remove("hidden");
+
+                        if (cartIconEl) {
+                            cartIconEl.classList.add("animate-bounce");
+                            setTimeout(() => cartIconEl.classList.remove("animate-bounce"), 600);
+                        }
+                    }
+                })
+                .catch(err => console.error("Add to cart failed:", err));
+            };
+        });
+    </script>
+    
 @endsection
