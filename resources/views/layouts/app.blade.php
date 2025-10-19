@@ -15,6 +15,36 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="antialiased">
-        {{ $slot }}
+        @include('layouts.header')
+        @include('layouts.navigation')
+
+        <main>
+            @yield('content')
+        </main>
+
+         {{-- ดึงจำนวนสินค้าใน cart ทุกครั้งที่โหลดหน้า --}}
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const cartCountEl = document.getElementById("cart-count");
+            if (!cartCountEl) return;
+
+            fetch("/cart/count")
+                .then(res => {
+                    if (res.status === 401) return { count: 0 }; // ถ้ายังไม่ได้ login
+                    return res.json();
+                })
+                .then(data => {
+                    const count = data.count || 0;
+                    cartCountEl.textContent = count;
+
+                    if (count > 0) {
+                        cartCountEl.classList.remove("hidden");
+                    } else {
+                        cartCountEl.classList.add("hidden");
+                    }
+                })
+                .catch(() => cartCountEl.classList.add("hidden"));
+        });
+    </script>
     </body>
 </html>
