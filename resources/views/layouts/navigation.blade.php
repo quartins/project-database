@@ -17,7 +17,7 @@
 
                 {{-- Collection dropdown --}}
                 <div class="relative group">
-                    <a href="#" class="text-white hover:text-pink-200 transition">Collection</a>
+                    <a href="{{ route('collection.index') }}" class="text-white hover:text-pink-200 transition">Collection</a>
 
                     {{--  dropdown --}}
                     <div class="absolute left-1/2 -translate-x-1/2 top-full mt-3
