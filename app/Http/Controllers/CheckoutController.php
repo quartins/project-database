@@ -114,34 +114,34 @@ class CheckoutController extends Controller
  */
 public function applyCoupon(Order $order, Request $req)
 {
-    $data = $req->validate([
-        'coupon_code' => 'nullable|string|max:50',
-    ]);
+    // 1) ถ้า request มีฟิลด์ที่อยู่มากับคูปอง → เก็บใส่ order ไว้เป็นร่าง (ไม่จ่ายเงิน)
+    $addressKeys = [
+        'recipient_name','phone','address_line1','address_line2',
+        'district','province','postcode','country','shipping_fee'
+    ];
+    $draft = $req->only($addressKeys);
+    if (!empty(array_filter($draft))) {
+        $order->fill($draft);
+    }
 
-    $order->coupon_code = $data['coupon_code'] ?? null;
-    $order->discount = 0;
-
-    if (filled($order->coupon_code) && strtolower(trim($order->coupon_code)) === 'chamora') {
+    // 2) ประมวลผลคูปอง
+    $code = strtolower(trim($req->input('coupon_code', '')));
+    $order->coupon_code = $code ?: null;
+    $order->discount    = 0;
+    if ($code === 'chamora') {
         $order->discount = round($order->subtotal * 0.15, 2);
-        $msg = 'ใช้คูปองสำเร็จ — ลด 15% ของค่าสินค้า';
-        $type = 'ok';
+        $msgKey = 'coupon_ok';
+        $msgVal = 'ใช้คูปองสำเร็จ — ลด 15% ของค่าสินค้า';
     } else {
-        if (filled($order->coupon_code)) {
-            $msg = 'คูปองไม่ถูกต้อง';
-            $type = 'err';
-        } else {
-            $msg = 'ยังไม่ได้ใส่คูปอง (ข้ามได้)';
-            $type = 'info';
-        }
-        // ถ้าไม่ถูกต้อง/ไม่ใส่ → ส่วนลดเป็น 0
-        $order->coupon_code = $data['coupon_code'] ?? null;
-        $order->discount = 0;
+        $msgKey = 'coupon_info';
+        $msgVal = 'นำคูปองออกแล้ว';
     }
 
     $order->recalc();
     $order->save();
 
-    return back()->with("coupon_$type", $msg);
+    // 3) กลับหน้าเดิม + flash input ทั้งหมดกลับไป
+    return back()->with($msgKey, $msgVal)->withInput();
 }
     public function payment(Order $order)
     {

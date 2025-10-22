@@ -4,7 +4,7 @@
 @section('content')
 <div class="grid lg:grid-cols-3 gap-8">
 
-  {{-- LEFT: Address --}}
+  {{-- LEFT: Address + Coupon (แยกฟอร์ม ไม่ซ้อนกัน) --}}
   <div class="lg:col-span-2 space-y-6">
 
     <div class="flex items-center justify-between">
@@ -14,7 +14,19 @@
       </a>
     </div>
 
-    {{-- ✅ ฟอร์มที่อยู่ (ฟอร์มเดียว, มี id) --}}
+    {{-- แจ้งเตือนจากฝั่ง server (เช่น stock ไม่พอ) --}}
+    @if(session('flash_err'))
+      <div class="p-3 rounded-lg bg-rose-50 text-rose-700 border border-rose-200">
+        {{ session('flash_err') }}
+      </div>
+    @endif
+    @if ($errors->any())
+      <div class="p-3 rounded-lg bg-rose-50 text-rose-700 border border-rose-200">
+        กรุณาตรวจสอบข้อมูลให้ครบถ้วน
+      </div>
+    @endif
+
+    {{-- ========== ฟอร์มที่อยู่ (ฟอร์มหลัก) ========== --}}
     <form id="addressForm" class="bg-white rounded-2xl shadow p-6 space-y-5"
           action="{{ route('checkout.update',$order) }}" method="POST">
       @csrf
@@ -22,46 +34,51 @@
       <p class="text-sm text-gray-500 -mt-2">กรอกแค่ช่องที่มี * ก็เพียงพอ (เหมือนเว็บใหญ่ ๆ)</p>
 
       <div class="grid md:grid-cols-2 gap-4">
-        <!-- ... ช่องกรอกตามเดิม ... -->
         <div>
           <label class="block text-sm text-gray-600 mb-1">Full name *</label>
           <input name="recipient_name" class="input" autocomplete="name"
-                 value="{{ old('recipient_name',$order->recipient_name) }}" required>
+                 value="{{ old('recipient_name', $order->recipient_name) }}" required>
         </div>
         <div>
           <label class="block text-sm text-gray-600 mb-1">Phone</label>
           <input name="phone" class="input" autocomplete="tel"
-                 value="{{ old('phone',$order->phone) }}">
+                 value="{{ old('phone', $order->phone) }}">
         </div>
+
         <div class="md:col-span-2">
           <label class="block text-sm text-gray-600 mb-1">Address line 1 *</label>
           <input name="address_line1" class="input" autocomplete="address-line1"
-                 value="{{ old('address_line1',$order->address_line1) }}" required>
+                 value="{{ old('address_line1', $order->address_line1) }}" required>
         </div>
+
         <div class="md:col-span-2">
           <label class="block text-sm text-gray-600 mb-1">Address line 2</label>
           <input name="address_line2" class="input" autocomplete="address-line2"
-                 value="{{ old('address_line2',$order->address_line2) }}">
+                 value="{{ old('address_line2', $order->address_line2) }}">
         </div>
+
         <div>
           <label class="block text-sm text-gray-600 mb-1">District</label>
           <input name="district" class="input" autocomplete="address-level2"
-                 value="{{ old('district',$order->district) }}">
+                 value="{{ old('district', $order->district) }}">
         </div>
+
         <div>
           <label class="block text-sm text-gray-600 mb-1">Province</label>
           <input name="province" class="input" autocomplete="address-level1"
-                 value="{{ old('province',$order->province) }}">
+                 value="{{ old('province', $order->province) }}">
         </div>
+
         <div>
           <label class="block text-sm text-gray-600 mb-1">Postcode</label>
           <input name="postcode" class="input" inputmode="numeric" pattern="[0-9]*"
-                 autocomplete="postal-code" value="{{ old('postcode',$order->postcode) }}">
+                 autocomplete="postal-code" value="{{ old('postcode', $order->postcode) }}">
         </div>
+
         <div>
           <label class="block text-sm text-gray-600 mb-1">Country</label>
           <input name="country" class="input" autocomplete="country-name"
-                 value="{{ old('country',$order->country ?? 'Thailand') }}">
+                 value="{{ old('country', $order->country ?? 'Thailand') }}">
         </div>
       </div>
 
@@ -75,7 +92,7 @@
       </div>
     </form>
 
-    {{-- ✅ ฟอร์มคูปอง (แยกฟอร์ม ไม่ซ้อน) --}}
+    {{-- ========== ฟอร์มคูปอง (ฟอร์มแยก) ========== --}}
     <div class="bg-white rounded-2xl border border-gray-100 p-4">
       <div class="flex items-center justify-between mb-3">
         <div class="text-lg font-semibold">COUPON (optional)</div>
@@ -84,22 +101,30 @@
         @endif
       </div>
 
+      {{-- Alerts --}}
       @if(session('coupon_ok'))
-        <div class="p-3 rounded-lg bg-green-50 text-green-700 border border-green-200 mb-3">{{ session('coupon_ok') }}</div>
+        <div class="p-3 rounded-lg bg-green-50 text-green-700 border border-green-200 mb-3">
+          {{ session('coupon_ok') }}
+        </div>
       @endif
       @if(session('coupon_err'))
-        <div class="p-3 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 mb-3">{{ session('coupon_err') }}</div>
+        <div class="p-3 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 mb-3">
+          {{ session('coupon_err') }}
+        </div>
       @endif
       @if(session('coupon_info'))
-        <div class="p-3 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 mb-3">{{ session('coupon_info') }}</div>
+        <div class="p-3 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 mb-3">
+          {{ session('coupon_info') }}
+        </div>
       @endif
 
-      <form class="flex gap-3" method="POST" action="{{ route('checkout.applyCoupon',$order) }}">
+      <form id="couponForm" class="flex gap-3" method="POST" action="{{ route('checkout.applyCoupon',$order) }}">
         @csrf
         <input name="coupon_code" class="input flex-1" autocomplete="one-time-code"
                placeholder="Enter code (e.g., chamora)"
-               value="{{ old('coupon_code',$order->coupon_code) }}">
-        <button type="submit" class="px-6 rounded-lg text-white font-semibold bg-[#5a362e] hover:opacity-90">
+               value="{{ old('coupon_code', $order->coupon_code) }}">
+        <button type="submit"
+                class="px-6 rounded-lg text-white font-semibold bg-[#5a362e] hover:opacity-90">
           APPLY
         </button>
       </form>
@@ -108,7 +133,7 @@
 
   </div>
 
-  {{-- RIGHT: Sticky Order Summary + ✅ ปุ่มไปหน้าชำระเงิน (submit ฟอร์มซ้าย) --}}
+  {{-- RIGHT: Sticky Order Summary + ปุ่มไปหน้าชำระเงิน (ส่งฟอร์มที่อยู่) --}}
   <aside class="bg-white rounded-2xl shadow p-5 h-fit lg:sticky lg:top-6">
     <div class="text-xl font-semibold mb-3">Order Summary</div>
 
@@ -136,7 +161,7 @@
       @endforeach
     </div>
 
-    {{-- ✅ ปุ่มเดียว ส่งฟอร์มซ้าย --}}
+    {{-- ปุ่มเดียว ส่งฟอร์มที่อยู่ (addressForm) --}}
     <button form="addressForm"
             class="mt-5 w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white py-3 rounded-xl shadow
                    hover:shadow-md hover:scale-[1.01] transition">
@@ -148,4 +173,22 @@
 <style>
   .input{ @apply w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-300; }
 </style>
+
+{{-- คัดลอกค่าจากฟอร์มที่อยู่ไปฟอร์มคูปอง ก่อน submit เพื่อให้ค่าไม่หาย --}}
+<script>
+  document.getElementById('couponForm').addEventListener('submit', function () {
+    const src = document.getElementById('addressForm').elements;
+    for (const el of src) {
+      if (!el.name) continue;
+      let h = this.querySelector('input[type="hidden"][name="'+el.name+'"]');
+      if (!h) {
+        h = document.createElement('input');
+        h.type = 'hidden';
+        h.name = el.name;
+        this.appendChild(h);
+      }
+      h.value = el.value;
+    }
+  });
+</script>
 @endsection
