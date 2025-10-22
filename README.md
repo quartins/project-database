@@ -2,6 +2,7 @@
 
 Laravel project for project-database.
 
+
 - Up product in database -
 ./vendor/bin/sail artisan migrate:fresh --seed
 
@@ -14,4 +15,6 @@ git config --global user.name "Your Name"
 git config --global user.email "your_email@example.com"
 
 
+$ ./vendor/bin/sail npm run dev
+open  http://localhost
 
