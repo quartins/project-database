@@ -26,4 +26,20 @@ class ProductController extends Controller
 
     return view('homepage.home', compact('products', 'recommended'));
 }
+
+    public function search(Request $request)
+    {
+        $query = $request->get('q');
+
+        $products = Product::whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($query) . '%'])->get();
+
+        // ให้รูปภาพเป็น URL เต็ม 
+        $products->transform(function ($product) {
+            $product->image_url = asset($product->image_url);
+            return $product;
+        });
+
+        return response()->json($products);
+    }
+
 }

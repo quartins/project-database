@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\Route;
 // หน้าแรก (ทุกคนเข้าดูได้)
 Route::get('/', [ProductController::class, 'index'])->name('home');
 
+// about real-time search 
+Route::get('/search', [ProductController::class, 'search'])->name('search');
+
 // ป้องกันการเข้าถึง cart/profile โดยยังไม่ login
 Route::middleware(['auth'])->group(function () {
 
