@@ -26,6 +26,15 @@
             <!-- Right: Card with Form -->
             <div class="bg-white rounded-2xl shadow-xl p-8">
                 <h2 class="text-3xl font-crimson font-bold text-center mb-8 text-gray-800 ">Register</h2>
+        @if ($errors->any())
+                <div class="mb-4 text-red-600">
+                    <ul class="list-disc ml-5">
+             @foreach ($errors->all() as $error)
+                 <li>{{ $error }}</li>
+                     @endforeach
+                </ul>
+            </div>
+        @endif
 
                 <form method="POST" action="{{ route('register') }}">
                     @csrf
