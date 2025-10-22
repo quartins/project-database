@@ -5,6 +5,11 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CollectionController;
+use App\Http\Controllers\CheckoutController;
+
+Route::get('/products/{key}', [ProductController::class,'show'])
+     ->where('key', '[0-9]+(?:-[A-Za-z0-9\-]+)?')
+     ->name('products.show');
 
 // --- หน้าสาธารณะที่ทุกคนเข้าได้ ---
 
@@ -14,6 +19,25 @@ Route::get('/', [ProductController::class, 'index'])->name('home');
 // หน้า Collection 
 Route::get('/collections', [CollectionController::class, 'index'])->name('collection.index');
 Route::get('/collections/{category}', [CollectionController::class, 'show'])->name('collection.show');
+
+// รายละเอียดสินค้า: /products/{id}-{slug}
+Route::get('/products/{idSlug}', [ProductController::class,'show'])->name('products.show');
+
+// BUY NOW → สร้าง order draft → Summary
+Route::get ('/buy/{product}',           [CheckoutController::class,'createFromProduct'])->name('checkout.buy');
+
+// Summary (กรอกที่อยู่ + คูปอง)
+Route::get ('/checkout/{order}',        [CheckoutController::class,'summary'])->name('checkout.summary');
+Route::post('/checkout/{order}',        [CheckoutController::class,'update'])->name('checkout.update');
+
+Route::post('/checkout/{order}/coupon', [CheckoutController::class, 'applyCoupon'])
+    ->name('checkout.applyCoupon');
+
+// Payment (จำลอง) & Thank You
+Route::get ('/payment/{order}',         [CheckoutController::class,'payment'])->name('checkout.payment');
+Route::post('/payment/{order}/confirm', [CheckoutController::class,'confirm'])->name('checkout.confirm');
+Route::get ('/thank-you',               [CheckoutController::class,'thankyou'])->name('checkout.thankyou');
+
 
 
 // --- โซนสำหรับสมาชิกเท่านั้น (ต้องล็อกอิน) ---
