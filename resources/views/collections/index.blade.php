@@ -3,17 +3,19 @@
 @section('content')
     
     <div class="bg-white">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12 ">
+        <div class="max-w-[66rem] mx-auto">
             
             {{-- Grid Container สำหรับจัดเรียงการ์ด --}}
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+                
 
                 {{-- วนลูปเพื่อแสดง Category Card แต่ละอัน --}}
                 @foreach ($categories as $category)
                 <a href="{{ route('collection.show', $category) }}" 
-                   class="group block p-5 bg-white border border-gray-300 rounded-lg shadow-sm 
-                          transition duration-300 ease-in-out 
-                          hover:shadow-xl hover:-translate-y-1 text-center">
+                        class="group block w-60 p-5 bg-white border border-gray-300 rounded-lg shadow-sm 
+                        transition duration-300 ease-in-out 
+                        hover:shadow-xl hover:-translate-y-1 text-center">
                     
                     {{-- รูปภาพ --}}
                     <img src="{{ asset($category->image_url) }}" 
@@ -26,6 +28,7 @@
                 @endforeach
                 
             </div>
+          </div>  
         </div>
     </div>
 
