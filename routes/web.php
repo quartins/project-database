@@ -6,17 +6,18 @@ use App\Http\Controllers\CartController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CollectionController;
 
-// --- หน้าสาธารณะที่ทุกคนเข้าได้ ---
 
-// หน้าแรก
+// หน้าแรก (ทุกคนเข้าดูได้)
 Route::get('/', [ProductController::class, 'index'])->name('home');
+
+// about real-time search 
+Route::get('/search', [ProductController::class, 'search'])->name('search');
 
 // หน้า Collection 
 Route::get('/collections', [CollectionController::class, 'index'])->name('collection.index');
 Route::get('/collections/{category}', [CollectionController::class, 'show'])->name('collection.show');
 
-
-// --- โซนสำหรับสมาชิกเท่านั้น (ต้องล็อกอิน) ---
+// ป้องกันการเข้าถึง cart/profile โดยยังไม่ login
 Route::middleware(['auth'])->group(function () {
 
     // Cart routes
@@ -34,7 +35,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
 });
 
 require __DIR__.'/auth.php';
