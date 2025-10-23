@@ -57,20 +57,22 @@
           💕 BUY NOW
         </a>
 
-        {{-- Add To Cart --}}
-        @if(Route::has('cart.add'))
-          <form id="addToCartForm" action="{{ route('cart.add') }}" method="POST">
-            @csrf
-            <input type="hidden" name="product_id" value="{{ $product->id }}">
-            <input type="hidden" id="qty_cart" name="qty" value="{{ session('suggested_qty', $qty ?? 1) }}">
-            <button type="submit"
-                    id="btnAddToCart"
-                    class="px-8 py-3 border-2 border-rose-400 rounded-lg text-rose-600 font-semibold
-                           hover:bg-rose-50 hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
-              🛍️ Add To Cart
-            </button>
-          </form>
-        @endif
+       {{-- ปุ่ม Add to Cart --}}
+@if(Route::has('cart.add'))
+    <form id="addToCartForm" action="{{ route('cart.add') }}" method="POST">
+        @csrf
+        <input type="hidden" name="product_id" value="{{ $product->id }}">
+        <input type="hidden" id="qty_cart" name="qty" value="{{ session('suggested_qty', $qty ?? 1) }}">
+        <button type="submit"
+                id="btnAddToCart"
+                class="px-8 py-3 border-2 border-rose-400 rounded-lg text-rose-600 font-semibold
+                       hover:bg-rose-50 hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
+            🛍️ Add To Cart
+        </button>
+    </form>
+@endif
+
+
       </div>
 
       <div id="qtyWarn" class="hidden text-sm text-rose-600 mt-2">❗ จำนวนที่เลือกมากกว่าสินค้าที่เหลือ</div>

@@ -27,6 +27,8 @@ class User extends Authenticatable
         'profile_photo',
         'phone',         
         'birthday',
+        'recipient_name','phone','address_line1','address_line2',
+    'district','province','postcode','country',
     ];
 
 

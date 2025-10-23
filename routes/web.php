@@ -7,7 +7,8 @@ use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\CheckoutController;
-
+use App\Http\Controllers\ProfileOrderController;
+use App\Http\Controllers\ProfileAddressController;
 
 Route::get('/products/{key}', [ProductController::class,'show'])
      ->where('key', '[0-9]+(?:-[A-Za-z0-9\-]+)?')
@@ -31,6 +32,10 @@ Route::get('/collections/{category}', [CollectionController::class, 'show'])->na
 // รายละเอียดสินค้า: /products/{id}-{slug}
 Route::get('/products/{idSlug}', [ProductController::class,'show'])->name('products.show');
 
+// เพิ่มสินค้าลงในตะกร้า
+Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+
+
 // BUY NOW → สร้าง order draft → Summary
 Route::get ('/buy/{product}',           [CheckoutController::class,'createFromProduct'])->name('checkout.buy');
 
@@ -46,8 +51,10 @@ Route::get ('/payment/{order}',         [CheckoutController::class,'payment'])->
 Route::post('/payment/{order}/confirm', [CheckoutController::class,'confirm'])->name('checkout.confirm');
 Route::get ('/thank-you',               [CheckoutController::class,'thankyou'])->name('checkout.thankyou');
 
-
-
+Route::get('/contact', function () {
+    return view('contact');
+})->name('contact');
+Route::get('/about', function () {return view('about');})->name('about');
 // --- โซนสำหรับสมาชิกเท่านั้น (ต้องล็อกอิน) ---
 
 
@@ -63,6 +70,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/cart/update', [CartController::class, 'update'])->name('cart.update');
     Route::post('/cart/remove', [CartController::class, 'remove'])->name('cart.remove');
     Route::get('/cart/count', [CartController::class, 'count'])->name('cart.count');
+ 
+// routes/web.php (ภายใน Route::middleware(['auth'])->group(function () { ... })
+Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
+
 
     // Profile pages
 Route::get('/myprofile', function () {
@@ -76,10 +87,11 @@ require __DIR__.'/auth.php';
 Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
 Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
 Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+Route::get('/orders', [ProfileOrderController::class, 'index'])
+        ->name('orders.index');
 
-   
-
+ Route::get('/profile/address',  [ProfileAddressController::class, 'edit'])->name('address.edit');
+    Route::patch('/profile/address', [ProfileAddressController::class, 'update'])->name('address.update');
 });
  
 require __DIR__.'/auth.php';
