@@ -28,27 +28,32 @@ class RegisteredUserController extends Controller
      * @throws \Illuminate\Validation\ValidationException
      */
     public function store(Request $request): RedirectResponse
-    {
-        $request->validate([
-            'username'  => ['required', 'string', 'max:255', 'unique:users,username'],
-            'firstname' => ['required', 'string', 'max:255'],
-            'lastname'  => ['required', 'string', 'max:255'],
-            'email'     => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
-            'password'  => ['required', 'confirmed', Rules\Password::defaults()],
-        ]);
+{
+    $request->validate([
+        'username'  => ['required','string','max:255','unique:users,username'],
+        'firstname' => ['required','string','max:255'],
+        'lastname'  => ['required','string','max:255'],
+        'email'     => ['required','string','lowercase','email','max:255','unique:users,email'],
+        'password'  => ['required','confirmed', Rules\Password::defaults()],
+    ]);
 
-        $user = User::create([
-            'username'  => $request->username,
-            'firstname' => $request->firstname,
-            'lastname'  => $request->lastname,
-            'email'     => $request->email,
-            'password'  => Hash::make($request->password),
-        ]);
+    
+    $name = trim($request->firstname.' '.$request->lastname) ?: $request->username;
 
-        event(new Registered($user));
-        Auth::login($user);
+    $user = User::create([
+                 
+        'username'  => $request->username,
+        'firstname' => $request->firstname,
+        'lastname'  => $request->lastname,
+        'email'     => $request->email,
+        'password'  => Hash::make($request->password),
+    ]);
 
-        return redirect()->intended('/');
-    }
+    event(new Registered($user));
+    Auth::login($user);
+
+    return redirect()->intended('/'); 
+}
+
 
 }
