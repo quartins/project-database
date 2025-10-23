@@ -13,16 +13,19 @@ Route::get('/products/{key}', [ProductController::class,'show'])
      ->where('key', '[0-9]+(?:-[A-Za-z0-9\-]+)?')
      ->name('products.show');
 
-// --- หน้าสาธารณะที่ทุกคนเข้าได้ ---
-
-// หน้าแรก
 
 
+
+// หน้าแรก (ทุกคนเข้าดูได้)
 Route::get('/', [ProductController::class, 'index'])->name('home');
+
+// about real-time search 
+Route::get('/search', [ProductController::class, 'search'])->name('search');
 
 // หน้า Collection 
 Route::get('/collections', [CollectionController::class, 'index'])->name('collection.index');
 Route::get('/collections/{category}', [CollectionController::class, 'show'])->name('collection.show');
+
 
 
 // รายละเอียดสินค้า: /products/{id}-{slug}
@@ -50,6 +53,8 @@ Route::get ('/thank-you',               [CheckoutController::class,'thankyou'])-
 
 // ป้องกันการเข้าถึง cart/profile โดยยังไม่ login
 
+
+// ป้องกันการเข้าถึง cart/profile โดยยังไม่ login
 Route::middleware(['auth'])->group(function () {
 
     // Cart routes
@@ -65,6 +70,7 @@ Route::get('/myprofile', function () {
     return redirect()->route('profile.edit');
 })->name('profile.custom');
 
+
 require __DIR__.'/auth.php';
 
 Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -73,6 +79,7 @@ Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.
 Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
 
    
+
 });
  
 require __DIR__.'/auth.php';
