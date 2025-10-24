@@ -23,14 +23,20 @@ class AuthenticatedSessionController extends Controller
      * Handle an incoming authentication request.
      */
     public function store(LoginRequest $request): RedirectResponse
-    {
-        $request->authenticate();
+{
+    $request->authenticate();
+    $request->session()->regenerate();
 
-        $request->session()->regenerate();
+    // ดึง intended URL จาก session (เช่น /profile, /cart/count)
+    $intended = session()->pull('url.intended', '/');
 
-        return redirect()->intended('/');
-
+    // ✅ ถ้า URL ที่จำไว้เป็น API หรือ route ของ cart ให้กลับไปหน้าแรกแทน
+    if (preg_match('/(\/cart\/|\/api\/)/', $intended)) {
+        $intended = '/';
     }
+
+    return redirect($intended);
+}
 
     /**
      * Destroy an authenticated session.
