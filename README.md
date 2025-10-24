@@ -9,6 +9,7 @@ Laravel project for project-database.
 Up product in database:
 ```bash
 ./vendor/bin/sail artisan migrate:fresh --seed
+
 ```
 
 Up git (if in vs code use wsl) - 
@@ -25,4 +26,11 @@ Start the development server:
 ./vendor/bin/sail npm run dev
 git fetch origin
 ```
+
+Note!!  "freah" mean if you use this data in dbeaver wil be lost all
+
+-./vendor/bin/sail up -d
+
+-./vendor/bin/sail npm run dev
+open  http://localhost
 

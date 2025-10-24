@@ -47,6 +47,7 @@
 
 
 
+
     {{--  Script logic --}}
     @section('scripts')
     <script>

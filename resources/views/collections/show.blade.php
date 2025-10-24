@@ -4,13 +4,14 @@
 @section('content')
 
     <div class="bg-white">
-        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12 ">
+            <div class="max-w-[66rem] mx-auto">
 
             {{-- Category Title --}}
             <h1 class="text-4xl font-bold text-center mb-10">{{ $category->name }}</h1>
 
             {{-- Grid Container for Products --}}
-            <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 sm:gap-8">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
 
                 {{-- วนลูปเพื่อแสดง Product Card แต่ละอัน --}}
                 @foreach ($products as $product)
@@ -36,6 +37,7 @@
                 @endforeach
 
             </div>
+         </div>   
         </div>
     </div>
 
