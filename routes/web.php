@@ -35,6 +35,23 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // 1. หน้าสำหรับโชว์ QR Code (GET)
+    Route::get('/payment', function () {
+        return view('payment.index'); 
+    })->name('payment.show');
+
+    // 2. route สำหรับรับการ "ยืนยันการชำระเงิน" (POST)
+    Route::post('/payment/confirm', function () {
+        // 📍 นี่คือจุดที่จะเขียน Logic ตรวจสอบการจ่ายเงินในอนาคต
+        // แต่ตอนนี้ เราจะ redirect ไปหน้า Thank You เลย
+        return redirect()->route('payment.thankyou');
+    })->name('payment.confirm');
+
+    // 3. หน้า Thank You (GET)
+    Route::get('/thank-you', function () {
+        return view('payment.thankyou');
+    })->name('payment.thankyou');
 });
 
 require __DIR__.'/auth.php';
