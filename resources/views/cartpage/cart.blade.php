@@ -1,36 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chamora | My Cart</title>
-    @vite(['resources/css/app.css','resources/js/app.js'])
-</head>
+@extends('layouts.app')
 
-<body class="bg-[#FFF8F8] font-serif min-h-screen">
-    {{-- 🩷 Header --}}
-    <header class="shadow-md" style="background: radial-gradient(circle at center, #ffffff, #fed8ee, #ffd1eb)">
-        <div class="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
-            <div>
-                <img src="{{ asset('images/logo.png') }}" alt="Chamora Logo" class="h-14">
-            </div>
-            <div class="flex items-center gap-5 relative">
-                <a href="/cart" class="relative">
-                    <img id="cart-icon" src="{{ asset('images/cart.png') }}" class="h-6">
-                    <span id="cart-count" 
-                          class="absolute -top-2 -right-2 bg-pink-600 text-white text-xs font-bold rounded-full w-5 h-5 flex justify-center items-center {{ $items->count() ? '' : 'hidden' }}">
-                        {{ $items->sum('quantity') }}
-                    </span>
-                </a>
-                <a href="/myprofile"><img src="{{ asset('images/user.png') }}" class="h-5"></a>
-            </div>
-        </div>
-    </header>
+@section('title', 'Chamora | My Cart')
 
-    @include('layouts.navigation')
-
+@section('content')
+<main class="bg-[#FFF8F8] font-serif min-h-screen">
+    
     {{-- 🛒 Cart Content --}}
-    <main class="max-w-7xl mx-auto py-10 px-6">
+    <div class="max-w-7xl mx-auto py-10 px-6">
         <h1 class="text-3xl font-bold text-[#7B4B3A] mb-6">
             My Cart ( {{ $items->count() }} )
         </h1>
@@ -63,11 +39,11 @@
                             <button class="plus-btn border border-[#7B4B3A] rounded-full w-6 h-6 flex justify-center items-center text-[#7B4B3A] hover:bg-[#7B4B3A] hover:text-white transition">+</button>
                             <span class="quantity text-gray-800 font-medium">{{ $item->quantity }}</span>
                             <button class="minus-btn border border-[#7B4B3A] rounded-full w-6 h-6 flex justify-center items-center text-[#7B4B3A] hover:bg-[#7B4B3A] hover:text-white transition">−</button>
-                           <button type="button"
+                            <button type="button"
                                 class="remove-btn text-gray-400 hover:text-pink-600 text-xl ml-4"
                                 data-id="{{ $item->product->id }}">
-                            &times;
-                        </button>
+                                &times;
+                            </button>
                         </div>
                     </div>
                 @endforeach
@@ -95,80 +71,76 @@
             </div>
         </div>
         @endif
-    </main>
+    </div>
+</main>
+@endsection
 
-    <script>
-        document.addEventListener("DOMContentLoaded", () => {
-            const subtotalEl = document.getElementById("subtotal");
-            const totalEl = document.getElementById("total");
-            const selectAll = document.getElementById("select-all");
-            const cartContainer = document.getElementById("cart-container");
-            const cartCountEl = document.getElementById("cart-count");
-            const myCartTitle = document.querySelector("h1");
+{{-- Script logic --}}
+@section('scripts')
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const subtotalEl = document.getElementById("subtotal");
+        const totalEl = document.getElementById("total");
+        const selectAll = document.getElementById("select-all");
+        const cartContainer = document.getElementById("cart-container");
+        const cartCountEl = document.getElementById("cart-count");
+        const myCartTitle = document.querySelector("h1");
 
-            //  คำนวณ subtotal เฉพาะสินค้าที่ select
-            function calcSubtotal() {
-                let subtotal = 0;
-                document.querySelectorAll(".cart-item").forEach(item => {
-                    const check = item.querySelector(".item-check");
-                    const qty = parseInt(item.querySelector(".quantity").textContent);
-                    const price = parseFloat(item.dataset.price);
-                    if (check.checked) subtotal += price * qty;
-                });
-                subtotalEl.textContent = `฿ ${subtotal.toFixed(1)}`;
-                totalEl.textContent = `฿ ${subtotal.toFixed(1)} THB`;
-            }
+        function calcSubtotal() {
+            let subtotal = 0;
+            document.querySelectorAll(".cart-item").forEach(item => {
+                const check = item.querySelector(".item-check");
+                const qty = parseInt(item.querySelector(".quantity").textContent);
+                const price = parseFloat(item.dataset.price);
+                if (check.checked) subtotal += price * qty;
+            });
+            subtotalEl.textContent = `฿ ${subtotal.toFixed(1)}`;
+            totalEl.textContent = `฿ ${subtotal.toFixed(1)} THB`;
+        }
 
-            //  อัปเดต select-all ให้ตรงกับ checkbox รายการ
-            function updateSelectAllStatus() {
-                const allChecks = document.querySelectorAll(".item-check");
-                const checked = document.querySelectorAll(".item-check:checked");
-                selectAll.checked = allChecks.length > 0 && checked.length === allChecks.length;
-            }
+        function updateSelectAllStatus() {
+            const allChecks = document.querySelectorAll(".item-check");
+            const checked = document.querySelectorAll(".item-check:checked");
+            selectAll.checked = allChecks.length > 0 && checked.length === allChecks.length;
+        }
 
-            //  อัปเดตจำนวนรวมทั้งหมด (ไม่เกี่ยวกับ select)
-            function updateCartCount() {
-                let totalQty = 0;
-                document.querySelectorAll(".cart-item").forEach(item => {
-                    const qty = parseInt(item.querySelector(".quantity").textContent);
-                    totalQty += qty;
-                });
+        function updateCartCount() {
+            let totalQty = 0;
+            document.querySelectorAll(".cart-item").forEach(item => {
+                const qty = parseInt(item.querySelector(".quantity").textContent);
+                totalQty += qty;
+            });
 
-                // อัปเดตหัวข้อ My Cart (x)
-                myCartTitle.textContent = `My Cart (${totalQty})`;
+            myCartTitle.textContent = `My Cart (${totalQty})`;
 
-                // อัปเดต icon cart
-                if (cartCountEl) {
-                    cartCountEl.textContent = totalQty;
-                    if (totalQty > 0) {
-                        cartCountEl.classList.remove("hidden");
-                        cartCountEl.classList.add("scale-125");
-                        setTimeout(() => cartCountEl.classList.remove("scale-125"), 300);
-                    } else {
-                        cartCountEl.classList.add("hidden");
-                    }
+            if (cartCountEl) {
+                cartCountEl.textContent = totalQty;
+                if (totalQty > 0) {
+                    cartCountEl.classList.remove("hidden");
+                    cartCountEl.classList.add("scale-125");
+                    setTimeout(() => cartCountEl.classList.remove("scale-125"), 300);
+                } else {
+                    cartCountEl.classList.add("hidden");
                 }
             }
+        }
 
-            // กด + / - / remove (x)
-            cartContainer.addEventListener("click", async (e) => {
-                const item = e.target.closest(".cart-item");
-                if (!item) return;
+        cartContainer.addEventListener("click", async (e) => {
+            const item = e.target.closest(".cart-item");
+            if (!item) return;
 
-                const productId = item.dataset.id;
-                let qty = parseInt(item.querySelector(".quantity").textContent);
+            const productId = item.dataset.id;
+            let qty = parseInt(item.querySelector(".quantity").textContent);
 
-                // เพิ่มสินค้า
-                if (e.target.classList.contains("plus-btn")) qty++;
+            if (e.target.classList.contains("plus-btn")) qty++;
+            if (e.target.classList.contains("minus-btn") && qty > 1) qty--;
 
-                // ลดสินค้า
-                if (e.target.classList.contains("minus-btn") && qty > 1) qty--;
+            if (e.target.classList.contains("remove-btn")) {
+                e.preventDefault();
 
-                //  ลบสินค้า
-                if (e.target.classList.contains("remove-btn")) {
-                    e.preventDefault(); //  ป้องกันไม่ให้ form submit หรือ reload หน้า
-
-                    await fetch("/cart/remove", {
+                try {
+                    //  ส่งคำสั่งลบไป backend
+                    const res = await fetch("/cart/remove", {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -176,56 +148,94 @@
                         },
                         body: JSON.stringify({ product_id: productId })
                     });
-                    
-                    // Fade-out effect แล้วลบ element
-                    item.classList.add("opacity-0", "translate-x-4", "transition-all", "duration-300");
-                    setTimeout(() => item.remove(), 300);
 
-                    updateCartCount();
+                    if (!res.ok) {
+                        console.error(" ลบสินค้าไม่สำเร็จ");
+                        return;
+                    }
+
+                    //  ลบ DOM ออกจากหน้า พร้อม effect
+                    item.classList.add("opacity-0", "translate-x-4", "transition-all", "duration-300");
+                    setTimeout(() => {
+                        item.remove();
+                        //  ถ้าลบหมดแล้ว ให้แสดงข้อความ "Your cart is empty"
+                        setTimeout(() => {
+                            const remaining = document.querySelectorAll(".cart-item").length;
+                            if (remaining === 0) {
+                                const cartContainer = document.getElementById("cart-container");
+                                cartContainer.innerHTML = `
+                                    <div class="text-center text-gray-500 italic py-10 bg-pink-50 rounded-lg shadow">
+                                        Your cart is empty 💕
+                                    </div>
+                                `;
+                            }
+                        }, 400);
+                    }, 300);
+
+                    //  อัปเดตจำนวนจาก backend โดยตรง
+                    const countRes = await fetch("/cart/count");
+                    const data = countRes.ok ? await countRes.json() : { count: 0 };
+                    const count = data.count || 0;
+
+                    //  อัปเดต title
+                    myCartTitle.textContent = `My Cart (${count})`;
+
+                    //  อัปเดต badge ตะกร้า
+                    if (cartCountEl) {
+                        if (count > 0) {
+                            cartCountEl.textContent = count;
+                            cartCountEl.classList.remove("hidden");
+                            cartCountEl.classList.add("scale-125");
+                            setTimeout(() => cartCountEl.classList.remove("scale-125"), 300);
+                        } else {
+                            cartCountEl.classList.add("hidden");
+                        }
+                    }
+
+                    //  อัปเดตราคารวม
                     calcSubtotal();
-                    return;
+                } catch (err) {
+                    console.error(" Error removing item:", err);
                 }
 
+                return;
+            }
 
-                //  อัปเดตใน DB
-                const res = await fetch("/cart/update", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.content || "{{ csrf_token() }}"
-                    },
-                    body: JSON.stringify({
-                        product_id: productId,
-                        quantity: qty
-                    })
-                });
 
-                const data = await res.json();
-                item.querySelector(".quantity").textContent = qty;
 
-                updateCartCount();
-                calcSubtotal();
-            });
-
-            // เลือกทั้งหมด
-            selectAll.addEventListener("change", () => {
-                document.querySelectorAll(".item-check").forEach(chk => chk.checked = selectAll.checked);
-                calcSubtotal();
-            });
-
-            // เปลี่ยน select รายการเดียว
-            document.querySelectorAll(".item-check").forEach(chk =>
-                chk.addEventListener("change", () => {
-                    calcSubtotal();
-                    updateSelectAllStatus();
+            const res = await fetch("/cart/update", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.content || "{{ csrf_token() }}"
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    quantity: qty
                 })
-            );
+            });
 
-            //  โหลดหน้าครั้งแรก
+            const data = await res.json();
+            item.querySelector(".quantity").textContent = qty;
+
             updateCartCount();
             calcSubtotal();
         });
-        </script>
 
-</body>
-</html>
+        selectAll.addEventListener("change", () => {
+            document.querySelectorAll(".item-check").forEach(chk => chk.checked = selectAll.checked);
+            calcSubtotal();
+        });
+
+        document.querySelectorAll(".item-check").forEach(chk =>
+            chk.addEventListener("change", () => {
+                calcSubtotal();
+                updateSelectAllStatus();
+            })
+        );
+
+        updateCartCount();
+        calcSubtotal();
+    });
+</script>
+@endsection
