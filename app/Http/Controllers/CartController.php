@@ -45,10 +45,13 @@ class CartController extends Controller
 
 
     // เพิ่มสินค้า ตรง icon cart
-    public function add(Request $request)
+   // app/Http/Controllers/CartController.php
+public function add(Request $request)
 {
-    // ตรวจสอบว่าผู้ใช้ล็อกอินหรือไม่
     if (!Auth::check()) {
+        if ($request->ajax()) {
+            return response()->json(['ok' => false, 'need_login' => true], 401);
+        }
         return redirect()->route('login')->with('error', 'กรุณาล็อกอินก่อน');
     }
 
@@ -60,28 +63,28 @@ class CartController extends Controller
                     ->where('product_id', $product->id)
                     ->first();
 
-    // กำหนดจำนวนสินค้า
-    $quantity = $request->input('qty', 1);
+    $qty = max(1, (int) $request->input('qty', 1));
 
-    // ถ้ามีสินค้านี้อยู่ในตะกร้าแล้ว ก็เพิ่มจำนวนสินค้า
     if ($item) {
-        $item->quantity += $quantity;
+        $item->quantity += $qty;
         $item->save();
     } else {
-        // ถ้าไม่มีสินค้าในตะกร้า ก็เพิ่มสินค้าตัวใหม่
         CartItem::create([
-            'cart_id' => $cart->id,
+            'cart_id'    => $cart->id,
             'product_id' => $product->id,
-            'quantity' => $quantity
+            'quantity'   => $qty,
         ]);
     }
 
-    // คำนวณจำนวนสินค้าทั้งหมดในตะกร้า
     $count = CartItem::where('cart_id', $cart->id)->sum('quantity');
 
-    // แสดงข้อความว่าเพิ่มสินค้าสำเร็จแล้ว และรีไดเรคกลับไปที่หน้าตะกร้า
+    if ($request->ajax()) {
+        return response()->json(['ok' => true, 'cart_count' => $count]);
+    }
+
     return redirect()->route('cart.index')->with('success', 'เพิ่มสินค้าในตะกร้าแล้ว');
 }
+
 
     
 
@@ -168,20 +171,21 @@ public function checkout(Request $request)
         return redirect('/cart')->with('error', 'ตะกร้าของคุณว่างเปล่า');
     }
 
-    // ✅ รับเฉพาะรายการที่ "ติ๊กเลือก" มาจากฟอร์ม
+    // รับเฉพาะรายการที่ติ๊กเลือกจากฟอร์ม
     $payload = json_decode($request->input('items', '[]'), true);
     if (empty($payload) || !is_array($payload)) {
         return redirect('/cart')->with('error', 'กรุณาเลือกสินค้าอย่างน้อย 1 รายการ');
     }
 
-    $selectedIds = collect($payload)->pluck('product_id')->map(fn($v)=> (int)$v)->values();
+    $selectedIds = collect($payload)->pluck('product_id')->map(fn($v)=>(int)$v)->values();
+
     $qtyMap = collect($payload)->mapWithKeys(function ($row) {
         $pid = (int)($row['product_id'] ?? 0);
         $q   = max(1, (int)($row['qty'] ?? 1));
         return [$pid => $q];
     });
 
-    // ✅ ดึงรายการในตะกร้าตามที่เลือกเท่านั้น
+    // ดึงรายการในตะกร้าตามที่เลือกเท่านั้น
     $items = $cart->cartItems()
                   ->whereIn('product_id', $selectedIds)
                   ->with('product')
@@ -191,7 +195,7 @@ public function checkout(Request $request)
         return redirect('/cart')->with('error', 'ไม่พบสินค้าที่เลือก');
     }
 
-    // ✅ คำนวณยอดรวมตามจำนวนที่เลือกจริง
+    // คำนวณ subtotal (เฉพาะที่เลือก)
     $subtotal = 0;
     foreach ($items as $ci) {
         $qty = $qtyMap[$ci->product_id] ?? $ci->quantity ?? 1;
@@ -200,33 +204,35 @@ public function checkout(Request $request)
 
     $shipping = 35.00;
 
-    // ✅ สร้างออเดอร์
+    // สร้างออเดอร์ก่อน แล้วค่อยสร้าง items
     $order = Order::create([
         'user_id'      => $user->id,
-        'subtotal'     => $subtotal,
-        'shipping_fee' => $shipping,
-        'total'        => $subtotal + $shipping,
         'status'       => 'draft',
+        'shipping_fee' => $shipping,
+        'subtotal'     => $subtotal,            // จะถูก recalc ทับอีกที
+        'discount'     => 0,
+        'total'        => 0,
     ]);
 
+    // เพิ่มรายการออเดอร์ โดยใช้คีย์ 'qty' เท่านั้น
     foreach ($items as $ci) {
         $qty = $qtyMap[$ci->product_id] ?? $ci->quantity ?? 1;
         $order->items()->create([
             'product_id' => $ci->product_id,
-            'quantity'   => $qty,
+            'qty'        => $qty,                // << สำคัญ
             'unit_price' => $ci->product->price,
         ]);
     }
 
-    // (ถ้ามีเมธอด $order->recalc()) จะยิ่งชัวร์:
+    // คำนวณยอดรวมจาก items + shipping/discount
     if (method_exists($order, 'recalc')) {
         $order->recalc();
     }
 
-    // ✅ ลบเฉพาะรายการที่ "เลือกแล้ว" ออกจากตะกร้า (ไม่ลบทั้งตะกร้า)
+    // ลบเฉพาะรายการที่เลือกออกจากตะกร้า
     $cart->cartItems()->whereIn('product_id', $selectedIds)->delete();
 
-    return redirect()->route('checkout.summary', ['order' => $order]);
+    return redirect()->route('checkout.summary', $order);
 }
 
 

@@ -79,4 +79,4 @@ Route::middleware(['auth'])->group(function () {
 });
 
 // auth routes (วางท้ายไฟล์ครั้งเดียว)
-require _DIR_.'/auth.php';
+require __DIR__.'/auth.php';

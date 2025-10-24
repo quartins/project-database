@@ -18,7 +18,7 @@ return new class extends Migration {
             $table->string('district')->nullable();
             $table->string('province')->nullable();
             $table->string('postcode', 10)->nullable();
-            $table->string('country')->default('Thailand');
+            $table->string('country')->nullable();
 
             // เงิน
             $table->decimal('subtotal', 10, 2)->default(0);

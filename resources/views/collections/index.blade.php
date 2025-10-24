@@ -4,31 +4,30 @@
     
     <div class="bg-white">
         <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12 ">
-        <div class="max-w-[66rem] mx-auto">
-            
-            {{-- Grid Container สำหรับจัดเรียงการ์ด --}}
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+            <div class="max-w-[66rem] mx-auto">
                 
+                {{-- Grid Container สำหรับจัดเรียงการ์ด --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
 
-                {{-- วนลูปเพื่อแสดง Category Card แต่ละอัน --}}
-                @foreach ($categories as $category)
-                <a href="{{ route('collection.show', $category) }}" 
-                        class="group block w-60 p-5 bg-white border border-gray-300 rounded-lg shadow-sm 
-                        transition duration-300 ease-in-out 
-                        hover:shadow-xl hover:-translate-y-1 text-center">
+                    {{-- วนลูปเพื่อแสดง Category Card แต่ละอัน --}}
+                    @foreach ($categories as $category)
+                        <a href="{{ route('collection.show', $category) }}" 
+                           class="group block w-60 p-5 bg-white border border-gray-300 rounded-lg shadow-sm 
+                                  transition duration-300 ease-in-out 
+                                  hover:shadow-xl hover:-translate-y-1 text-center">
+                            
+                            {{-- รูปภาพ (ใช้ accessor จาก Category: thumb_src) --}}
+                            <img src="{{ $category->thumb_src }}" 
+                                 alt="{{ $category->name }}" 
+                                 class="w-40 h-40 mx-auto object-contain mb-4">
+                            
+                            {{-- ชื่อ Category --}}
+                            <h3 class="text-gray-800 font-medium mb-2">{{ $category->name }}</h3>
+                        </a>
+                    @endforeach
                     
-                    {{-- รูปภาพ --}}
-                    <img src="{{ asset($category->image_url) }}" 
-                         alt="{{ $category->name }}" 
-                         class="w-40 h-40 mx-auto object-contain mb-4">
-                    
-                    {{-- ชื่อ Category --}}
-                    <h3 class="text-gray-800 font-medium mb-2">{{ $category->name }}</h3>
-                </a>
-                @endforeach
-                
-            </div>
-          </div>  
+                </div>
+            </div>  
         </div>
     </div>
 

@@ -41,38 +41,32 @@ class ProfileAddressController extends Controller
     }
 
     public function update(Request $request)
-    {
-        $userId = auth()->id();
+{
+    $user = auth()->user();
 
-        $data = $request->validate([
-            'recipient_name' => 'required|string|max:255',
-            'phone'          => 'nullable|string|max:30',
-            'address_line1'  => 'required|string|max:255',
-            'address_line2'  => 'nullable|string|max:255',
-            'district'       => 'nullable|string|max:100',
-            'province'       => 'nullable|string|max:100',
-            'postcode'       => 'nullable|string|max:10',
-            'country'        => 'nullable|string|max:100',
-        ]);
+    $data = $request->validate([
+        'recipient_name' => 'required|string|max:255',
+        'phone'          => 'nullable|string|max:30',
+        'address_line1'  => 'required|string|max:255',
+        'address_line2'  => 'nullable|string|max:255',
+        'district'       => 'nullable|string|max:100',
+        'province'       => 'nullable|string|max:100',
+        'postcode'       => 'nullable|string|max:10',
+        'country'        => 'nullable|string|max:100',
+    ]);
 
-        // หาออเดอร์ที่ปลอดภัยให้แก้ไข:
-        // - เอา draft/pending ล่าสุดมาก่อน
-        // - ถ้าไม่มี ให้ "สร้าง" draft ใหม่เพื่อเก็บที่อยู่
-        $order = Order::where('user_id', $userId)
-            ->whereIn('status', ['draft','pending_payment'])
-            ->latest('updated_at')
-            ->first();
+    // 1) เซฟลง users = เป็นที่อยู่หลัก
+    $user->fill($data)->save();
 
-        if (!$order) {
-            $order = Order::create([
-                'user_id'      => $userId,
-                'status'       => 'draft',
-                'shipping_fee' => 35.00,
-            ]);
-        }
+    // 2) (ไม่บังคับ) sync ใส่ draft/pending order ล่าสุด ถ้ามี
+    $order = \App\Models\Order::where('user_id', $user->id)
+        ->whereIn('status', ['draft','pending_payment'])
+        ->latest('updated_at')->first();
 
+    if ($order) {
         $order->fill($data)->save();
-
-        return back()->with('ok', 'บันทึกที่อยู่เรียบร้อยแล้ว (บันทึกไว้กับคำสั่งซื้อล่าสุดของคุณ)');
     }
+
+    return back()->with('ok', 'บันทึกที่อยู่โปรไฟล์เรียบร้อย');
+}
 }

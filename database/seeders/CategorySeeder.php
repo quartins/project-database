@@ -9,7 +9,7 @@ class CategorySeeder extends Seeder
 {
     public function run(): void
     {
-        $categories = [
+        $rows = [
             ['name' => 'Kitty Collection'],
             ['name' => 'My Melody Collection'],
             ['name' => 'Kuromi Collection'],
@@ -17,8 +17,8 @@ class CategorySeeder extends Seeder
             ['name' => 'Twinkle Collection'],
         ];
 
-        foreach ($categories as $cat) {
-            Category::create($cat);
+        foreach ($rows as $row) {
+            Category::firstOrCreate(['name' => $row['name']], $row);
         }
     }
 }

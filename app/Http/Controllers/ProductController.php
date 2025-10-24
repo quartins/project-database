@@ -8,66 +8,67 @@ use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
- public function index()
-{
-    // ดึงสินค้าทั้งหมด 
-    $products = Product::all();
+    // หน้า Home
+    public function index()
+    {
+        // สินค้าทั้งหมด (ไม่จำเป็นต้อง eager load อะไรใน home)
+        $products = Product::all();
 
-    //  ดึงเฉพาะรูปที่ 2 และ 3 ของแต่ละ collection
-    $recommended = collect();
+        // แนะนำ: ดึงรูปที่ 2–3 ของแต่ละ category id 1..5
+        $recommended = collect();
+        for ($i = 1; $i <= 5; $i++) {
+            $subset = Product::where('category_id', $i)
+                ->skip(1)->take(2)->get();
+            $recommended = $recommended->merge($subset);
+        }
 
-    for ($i = 1; $i <= 5; $i++) {
-        $subset = Product::where('category_id', $i)
-                    ->skip(1)   // ข้ามรูปที่ 1
-                    ->take(2)   // เอาแค่ 2 รูป (รูปที่ 2 และ 3)
-                    ->get();
-
-        $recommended = $recommended->merge($subset);
+        return view('homepage.home', compact('products', 'recommended'));
     }
 
-    return view('homepage.home', compact('products', 'recommended'));
-}
-
-
-  // รายละเอียดสินค้า: รองรับ /products/{id} และ /products/{id}-{slug}
-    // มี canonical redirect + รองรับ qty และ return url
+    // /products/{id} หรือ /products/{id}-{slug}
     public function show(Request $request, string $key)
     {
-        // ดึงเฉพาะเลข id ก่อนเครื่องหมาย '-'
-        $id = (int) strtok($key, '-');
+        // ตัดเอาเฉพาะ id ก่อนขีด
+        $id = (int) Str::before($key, '-');
 
-        // โหลดความสัมพันธ์ที่ต้องใช้ใน view
-        $product = Product::with(['category','materials'])->findOrFail($id);
+        // โหลดความสัมพันธ์ที่ต้องใช้ใน view (materials สำหรับ Composition)
+        $product = Product::with(['category', 'materials'])->findOrFail($id);
 
-        // คำนวณ slug จากชื่อ (ไม่มีคอลัมน์ slug ก็สร้างจากชื่อได้)
-        $slug = Str::slug($product->name);
-        $want = $product->id . '-' . $slug;
+        // ใช้ slug จาก DB เป็นหลัก; ถ้าไม่มี คำนวณจาก name ชั่วคราว
+        $slugDb = trim((string)($product->slug ?? ''));
+        $slug   = $slugDb !== '' ? $slugDb : Str::slug($product->name);
+        $want   = $product->id . '-' . $slug;
 
-        // ถ้า key ไม่ตรงรูปแบบ canonical -> redirect 301 ให้เป็น URL เดียว
+        // บังคับ canonical URL
         if ($key !== $want) {
             return redirect()->route('products.show', ['key' => $want], 301);
         }
 
-        // ค่าพารามิเตอร์เสริมสำหรับฟอร์มจำนวน/ย้อนกลับ (ถ้าจะใช้)
-        $qty = max(1, (int) $request->query('qty', 1));
+        // จำนวนขั้นต่ำ 1 และไม่เกินสต็อก (ถ้ามีระบุสต็อก)
+        $stock = (int) ($product->stock_qty ?? 0);
+        $qty   = max(1, (int) $request->query('qty', 1));
+        if ($stock > 0) {
+            $qty = min($qty, $stock);
+        }
+
+        // หน้าก่อนหน้า (ใช้ในปุ่ม back/return)
         $return = $request->query('return', url()->previous());
 
-        return view('products.show', compact('product','slug','qty','return'));
+        return view('products.show', compact('product', 'slug', 'qty', 'return'));
     }
 
+    // ค้นหา (autocomplete / live search)
     public function search(Request $request)
     {
-        $query = $request->get('q');
+        $q = (string) $request->get('q', '');
+        $products = Product::whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($q) . '%'])->get();
 
-        $products = Product::whereRaw('LOWER(name) LIKE ?', ['%' . strtolower($query) . '%'])->get();
-
-        // ให้รูปภาพเป็น URL เต็ม 
-        $products->transform(function ($product) {
-            $product->image_url = asset($product->image_url);
-            return $product;
+        // แปลง image_url ให้เป็น URL เต็มสำหรับ frontend
+        $products->transform(function ($p) {
+            $p->image_url = asset($p->image_url);
+            return $p;
         });
 
         return response()->json($products);
     }
-
 }
