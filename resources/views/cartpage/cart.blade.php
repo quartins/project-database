@@ -25,8 +25,8 @@
 
                 @foreach ($items as $item)
                     <div class="cart-item flex justify-between items-center border border-gray-300 rounded-md p-4 mb-6"
-                         data-id="{{ $item->product->id }}"
-                         data-price="{{ $item->product->price }}">
+                        data-id="{{ $item->product->id }}"
+                        data-price="{{ $item->product->price }}">
                         <div class="flex items-center gap-5">
                             <input type="checkbox" class="item-check accent-[#7B4B3A]">
                             <img src="{{ asset($item->product->image_url) }}" alt="{{ $item->product->name }}" class="w-24 h-24 object-contain rounded-md border border-gray-200">
@@ -65,13 +65,9 @@
                     <span>Total</span>
                     <span id="total">฿ 0.0 THB</span>
                 </div>
-                
-                {{-- payment --}}
-                <a href="{{ route('payment.show') }}" 
-                   class="w-full inline-block text-center bg-gradient-to-r from-[#7B4B3A] to-[#A17E6E] text-white font-semibold py-2.5 rounded-full shadow-md hover:opacity-90 transition">
-                   Check Out
-                </a>
-
+                <button class="w-full bg-gradient-to-r from-[#7B4B3A] to-[#A17E6E] text-white font-semibold py-2.5 rounded-full shadow-md hover:opacity-90 transition">
+                    Check Out
+                </button>
             </div>
         </div>
         @endif
@@ -79,6 +75,7 @@
 </main>
 @endsection
 
+{{-- Script logic --}}
 @section('scripts')
 <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -142,7 +139,7 @@
                 e.preventDefault();
 
                 try {
-                    //  ส่งคำสั่งลบไป backend
+                    //  ส่งคำสั่งลบไป backend
                     const res = await fetch("/cart/remove", {
                         method: "POST",
                         headers: {
@@ -157,11 +154,11 @@
                         return;
                     }
 
-                    //  ลบ DOM ออกจากหน้า พร้อม effect
+                    //  ลบ DOM ออกจากหน้า พร้อม effect
                     item.classList.add("opacity-0", "translate-x-4", "transition-all", "duration-300");
                     setTimeout(() => {
                         item.remove();
-                        //  ถ้าลบหมดแล้ว ให้แสดงข้อความ "Your cart is empty"
+                        //  ถ้าลบหมดแล้ว ให้แสดงข้อความ "Your cart is empty"
                         setTimeout(() => {
                             const remaining = document.querySelectorAll(".cart-item").length;
                             if (remaining === 0) {
@@ -175,15 +172,15 @@
                         }, 400);
                     }, 300);
 
-                    //  อัปเดตจำนวนจาก backend โดยตรง
+                    //  อัปเดตจำนวนจาก backend โดยตรง
                     const countRes = await fetch("/cart/count");
                     const data = countRes.ok ? await countRes.json() : { count: 0 };
                     const count = data.count || 0;
 
-                    //  อัปเดต title
+                    //  อัปเดต title
                     myCartTitle.textContent = `My Cart (${count})`;
 
-                    //  อัปเดต badge ตะกร้า
+                    //  อัปเดต badge ตะกร้า
                     if (cartCountEl) {
                         if (count > 0) {
                             cartCountEl.textContent = count;
@@ -195,7 +192,7 @@
                         }
                     }
 
-                    //  อัปเดตราคารวม
+                    //  อัปเดตราคารวม
                     calcSubtotal();
                 } catch (err) {
                     console.error(" Error removing item:", err);
