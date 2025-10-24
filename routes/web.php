@@ -5,84 +5,93 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CollectionController;
 use App\Http\Controllers\OrderController;
-use App\Http\Controllers\CheckoutController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\ProfileOrderController;
+use App\Http\Controllers\ProfileAddressController;
 
-/*
-|--------------------------------------------------------------------------
-| Public Routes (ไม่ต้อง login)
-|--------------------------------------------------------------------------
-*/
+Route::get('/products/{key}', [ProductController::class,'show'])
+     ->where('key', '[0-9]+(?:-[A-Za-z0-9\-]+)?')
+     ->name('products.show');
 
-// หน้าแรก
+
+
+
+// หน้าแรก (ทุกคนเข้าดูได้)
 Route::get('/', [ProductController::class, 'index'])->name('home');
 
-// ค้นหาแบบเรียลไทม์
+// about real-time search 
 Route::get('/search', [ProductController::class, 'search'])->name('search');
 
-// หน้า Collection และหมวดหมู่สินค้า
+// หน้า Collection 
 Route::get('/collections', [CollectionController::class, 'index'])->name('collection.index');
 Route::get('/collections/{category}', [CollectionController::class, 'show'])->name('collection.show');
 
-// รายละเอียดสินค้า (แสดงสินค้าเดี่ยว)
-Route::get('/products/{idSlug}', [ProductController::class, 'show'])
-    ->where('idSlug', '[0-9]+(?:-[A-Za-z0-9\-]+)?')
-    ->name('products.show');
 
-// ซื้อสินค้า (Buy Now) → สร้างออเดอร์ → Summary
-Route::get('/buy/{product}', [CheckoutController::class, 'createFromProduct'])->name('checkout.buy');
+
+// รายละเอียดสินค้า: /products/{id}-{slug}
+Route::get('/products/{idSlug}', [ProductController::class,'show'])->name('products.show');
+
+// เพิ่มสินค้าลงในตะกร้า
+Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+
+
+// BUY NOW → สร้าง order draft → Summary
+Route::get ('/buy/{product}',           [CheckoutController::class,'createFromProduct'])->name('checkout.buy');
 
 // Summary (กรอกที่อยู่ + คูปอง)
-Route::get('/checkout/{order}', [CheckoutController::class, 'summary'])->name('checkout.summary');
-Route::post('/checkout/{order}', [CheckoutController::class, 'update'])->name('checkout.update');
+Route::get ('/checkout/{order}',        [CheckoutController::class,'summary'])->name('checkout.summary');
+Route::post('/checkout/{order}',        [CheckoutController::class,'update'])->name('checkout.update');
 
-// ใช้คูปองส่วนลด
-Route::post('/checkout/{order}/coupon', [CheckoutController::class, 'applyCoupon'])->name('checkout.applyCoupon');
+Route::post('/checkout/{order}/coupon', [CheckoutController::class, 'applyCoupon'])
+    ->name('checkout.applyCoupon');
 
-// หน้าชำระเงิน & หน้ายืนยันการชำระ
-Route::get('/payment/{order}', [CheckoutController::class, 'payment'])->name('checkout.payment');
-Route::post('/payment/{order}/confirm', [CheckoutController::class, 'confirm'])->name('checkout.confirm');
+// Payment (จำลอง) & Thank You
+Route::get ('/payment/{order}',         [CheckoutController::class,'payment'])->name('checkout.payment');
+Route::post('/payment/{order}/confirm', [CheckoutController::class,'confirm'])->name('checkout.confirm');
+Route::get ('/thank-you',               [CheckoutController::class,'thankyou'])->name('checkout.thankyou');
 
-// หน้าขอบคุณ (หลังจ่ายเงินเสร็จ)
-Route::get('/thank-you', [CheckoutController::class, 'thankyou'])->name('checkout.thankyou');
+Route::get('/contact', function () {
+    return view('contact');
+})->name('contact');
+Route::get('/about', function () {return view('about');})->name('about');
+// --- โซนสำหรับสมาชิกเท่านั้น (ต้องล็อกอิน) ---
 
 
-/*
-|--------------------------------------------------------------------------
-| Protected Routes (ต้องล็อกอินก่อน)
-|--------------------------------------------------------------------------
-*/
+// ป้องกันการเข้าถึง cart/profile โดยยังไม่ login
+
+
+// ป้องกันการเข้าถึง cart/profile โดยยังไม่ login
 Route::middleware(['auth'])->group(function () {
 
-    // 🛒 Cart routes
+    // Cart routes
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
     Route::post('/cart/update', [CartController::class, 'update'])->name('cart.update');
     Route::post('/cart/remove', [CartController::class, 'remove'])->name('cart.remove');
     Route::get('/cart/count', [CartController::class, 'count'])->name('cart.count');
+ 
+// routes/web.php (ภายใน Route::middleware(['auth'])->group(function () { ... })
+Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
 
-    // 👤 Profile routes
-    Route::get('/myprofile', function () {
-        // เด้งไปหน้า profile ที่ถูกต้อง
-        return redirect()->route('profile.edit');
-    })->name('profile.custom');
 
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    // Profile pages
+Route::get('/myprofile', function () {
+    // เด้งไปหน้า /profile ที่ใช้ Controller และส่ง $user ถูกต้องแล้ว
+    return redirect()->route('profile.edit');
+})->name('profile.custom');
 
-    // 📦 Orders
-    Route::get('/orders', [OrderController::class, 'index'])->name('orders.index');
+
+require __DIR__.'/auth.php';
+
+Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+Route::get('/orders', [ProfileOrderController::class, 'index'])
+        ->name('orders.index');
+
+ Route::get('/profile/address',  [ProfileAddressController::class, 'edit'])->name('address.edit');
+    Route::patch('/profile/address', [ProfileAddressController::class, 'update'])->name('address.update');
 });
-
-
-/*
-|--------------------------------------------------------------------------
-| Authentication Routes (login, register, logout)
-|--------------------------------------------------------------------------
-|
-| ต้องอยู่ "นอก" middleware('auth') เพื่อให้ผู้ใช้ที่ยังไม่ login เข้าถึงได้
-| Laravel จะใช้ redirect()->intended() กลับไปยังหน้าก่อน login ให้อัตโนมัติ
-|--------------------------------------------------------------------------
-*/
-require __DIR__ . '/auth.php';
+ 
+require __DIR__.'/auth.php';
