@@ -178,10 +178,11 @@ public function applyCoupon(Order $order, Request $req)
             foreach ($order->items as $item) {
                 $item->product->decrement('stock_qty', $item->qty);
             }
-
+            $order->user_id = $order->user_id ?: auth()->id();
             $order->status = 'paid';
             $order->paid_at = now();
             $order->save();
+            $order->recalc();
 
             session()->forget("order_return_{$order->id}");
         });

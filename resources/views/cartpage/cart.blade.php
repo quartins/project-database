@@ -65,9 +65,17 @@
                     <span>Total</span>
                     <span id="total">฿ 0.0 THB</span>
                 </div>
-                <button class="w-full bg-gradient-to-r from-[#7B4B3A] to-[#A17E6E] text-white font-semibold py-2.5 rounded-full shadow-md hover:opacity-90 transition">
-                    Check Out
-                </button>
+                {{-- ✅ ปุ่ม Check Out: ส่งเฉพาะรายการที่เลือกพร้อมจำนวน --}}
+<form id="checkoutForm" action="{{ route('cart.checkout') }}" method="POST" class="mt-2">
+  @csrf
+  <input type="hidden" name="items" id="itemsField">
+  <button type="submit"
+    class="w-full bg-gradient-to-r from-[#7B4B3A] to-[#C79A8B] text-white
+           font-semibold py-3 rounded-full shadow-md hover:opacity-90 active:translate-y-[1px] transition">
+    Check Out
+  </button>
+</form>
+
             </div>
         </div>
         @endif
@@ -200,6 +208,32 @@
 
                 return;
             }
+
+
+            // --- รวบรวมรายการที่ "ติ๊กเลือก" + จำนวน ก่อน submit ไป backend ---
+const checkoutForm = document.getElementById("checkoutForm");
+if (checkoutForm) {
+  checkoutForm.addEventListener("submit", (e) => {
+    const selected = [];
+    document.querySelectorAll(".cart-item").forEach(item => {
+      const chk = item.querySelector(".item-check");
+      if (chk && chk.checked) {
+        const productId = parseInt(item.dataset.id, 10);
+        const qty = parseInt(item.querySelector(".quantity").textContent, 10) || 1;
+        selected.push({ product_id: productId, qty });
+      }
+    });
+
+    if (selected.length === 0) {
+      e.preventDefault();
+      alert("กรุณาเลือกสินค้าอย่างน้อย 1 รายการ");
+      return;
+    }
+
+    document.getElementById("itemsField").value = JSON.stringify(selected);
+  });
+}
+
 
 
 
