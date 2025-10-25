@@ -76,62 +76,79 @@ function showToast(message = "Added to cart!") {
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    // 🔍 Search system
-    const searchInput = document.getElementById("search-box");
+// 🔍 Search system (works globally, even if page doesn't have banner or grid)
+const searchInput = document.getElementById("search-box");
+
+// ตรวจสอบว่ามี search box จริงก่อนทำงาน
+if (searchInput) {
     const bannerSection = document.getElementById("banner-section");
     const titleEl = document.getElementById("section-title");
     const productGrid = document.getElementById("product-grid");
-    const resultsContainer = document.getElementById("search-results");
-    
-    if (searchInput && resultsContainer) {
-        let timer;
-        searchInput.addEventListener("input", () => {
-            const query = searchInput.value.trim();
-            clearTimeout(timer);
 
-            timer = setTimeout(async () => {
-                if (query.length === 0) {
-                    resultsContainer.classList.add("hidden");
-                    productGrid?.classList.remove("hidden");
-                    bannerSection?.classList.remove("hidden");
-                    titleEl?.classList.remove("hidden");
+    // ✅ สร้าง container สำหรับผลลัพธ์ ถ้ายังไม่มี
+    let resultsContainer = document.getElementById("search-results");
+    if (!resultsContainer) {
+        resultsContainer = document.createElement("div");
+        resultsContainer.id = "search-results";
+        resultsContainer.className =
+            "max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8";
+        document.body.appendChild(resultsContainer);
+    }
+
+    let timer;
+    searchInput.addEventListener("input", () => {
+        const query = searchInput.value.trim();
+        clearTimeout(timer);
+
+        timer = setTimeout(async () => {
+            if (query.length === 0) {
+                // ถ้า query ว่าง ให้ซ่อนผลลัพธ์และแสดง layout เดิม (ถ้ามี)
+                resultsContainer.classList.add("hidden");
+                productGrid?.classList.remove("hidden");
+                bannerSection?.classList.remove("hidden");
+                titleEl?.classList.remove("hidden");
+                return;
+            }
+
+            // ซ่อน element ที่มีเฉพาะบางหน้า ถ้ามี
+            bannerSection?.classList.add("hidden");
+            productGrid?.classList.add("hidden");
+            titleEl?.classList.add("hidden");
+
+            // แสดงผลลัพธ์
+            resultsContainer.classList.remove("hidden");
+            resultsContainer.innerHTML = `<p class='text-center text-gray-400 italic py-6'>Searching...</p>`;
+
+            try {
+                const res = await fetch(`/search?q=${encodeURIComponent(query)}`);
+                const data = await res.json();
+
+                if (!data || data.length === 0) {
+                    resultsContainer.innerHTML = `<p class='text-center text-gray-500 italic py-6'>No products found.</p>`;
                     return;
                 }
 
-                bannerSection?.classList.add("hidden");
-                productGrid?.classList.add("hidden");
-                titleEl?.classList.add("hidden");
-                resultsContainer.classList.remove("hidden");
-                resultsContainer.innerHTML = `<p class='text-center text-gray-400 italic py-6'>Searching...</p>`;
+                resultsContainer.innerHTML = data.map(p => `
+                    <div class="bg-white border border-gray-300 rounded-lg shadow-sm p-5 text-center hover:shadow-xl transition duration-300">
+                        <a href="/products/${p.id}-${p.slug}" class="block">
+                            <img src="${p.image_url}" alt="${p.name}" class="w-40 h-40 mx-auto object-contain mb-4">
+                            <h3 class="text-gray-800 font-medium mb-2">${p.name}</h3>
+                            <p class="text-gray-700 font-semibold mb-4">฿ ${parseFloat(p.price || 0).toFixed(1)}</p>
+                        </a>
+                        <button onclick="addToCart(${p.id})"
+                                class="bg-pink-500 hover:bg-pink-600 text-white font-medium px-4 py-2 rounded-full">
+                            Add to Cart
+                        </button>
+                    </div>
+                `).join("");
+            } catch (err) {
+                console.error("Search failed:", err);
+                resultsContainer.innerHTML = `<p class='text-center text-gray-500 italic py-6'>Search failed. Please try again.</p>`;
+            }
+        }, 300);
+    });
+}
 
-                try {
-                    const res = await fetch(`/search?q=${encodeURIComponent(query)}`);
-                    const data = await res.json();
-
-                    if (data.length === 0) {
-                        resultsContainer.innerHTML = `<p class='text-center text-gray-500 italic py-6'>No products found </p>`;
-                        return;
-                    }
-
-                    resultsContainer.innerHTML = data.map(p => `
-                        <div class="bg-white border border-gray-300 rounded-lg shadow-sm p-5 text-center hover:shadow-xl transition duration-300">
-                            <a href="/products/${p.id}-${p.slug}" class="block">
-                                <img src="${p.image_url}" alt="${p.name}" class="w-40 h-40 mx-auto object-contain mb-4">
-                                <h3 class="text-gray-800 font-medium mb-2">${p.name}</h3>
-                                <p class="text-gray-700 font-semibold mb-4">฿ ${parseFloat(p.price || 0).toFixed(1)}</p>
-                            </a>
-                            <button onclick="addToCart(${p.id})"
-                                    class="bg-pink-500 hover:bg-pink-600 text-white font-medium px-4 py-2 rounded-full">
-                                Add to Cart
-                            </button>
-                        </div>
-                    `).join("");
-                } catch (err) {
-                    resultsContainer.innerHTML = `<p class='text-center text-gray-500 italic py-6'>Search failed </p>`;
-                }
-            }, 300);
-        });
-    }
 
     // 🛍 Cart System
     const cartCountEl = document.getElementById("cart-count");

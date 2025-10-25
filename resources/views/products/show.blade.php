@@ -1,9 +1,30 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-6xl mx-auto py-10 px-6 grid md:grid-cols-2 gap-12 items-start">
+{{-- 🌸 Breadcrumb Navigation --}}
+<div class="max-w-6xl mx-auto px-6 mt-6 text-gray-600 text-sm font-medium">
+    <nav class="flex flex-wrap items-center gap-1">
+        <a href="{{ route('collection.index') }}" 
+           class="hover:text-[#6B3E2E] transition-colors">Collection</a>
+        <span>/</span>
 
-  {{-- ✅ รูปสินค้า --}}
+        @if($product->category)
+            <a href="{{ route('collection.show', ['category' => $product->category->id]) }}" 
+               class="hover:text-[#6B3E2E] transition-colors">
+                {{ $product->category->name }}
+            </a>
+            <span>/</span>
+        @endif
+
+        <span class="text-gray-800">{{ $product->name }}</span>
+    </nav>
+</div>
+
+
+
+<div class="max-w-6xl mx-auto py-10 px-6 grid md:grid-cols-2 gap-12 items-start">
+  
+  {{-- ✅ Product Image --}}
   <div class="bg-white rounded-2xl shadow-lg p-6 flex justify-center items-center">
     <img
       src="{{ asset($product->image_url) }}"
@@ -11,68 +32,66 @@
       class="mx-auto max-h-[480px] object-contain rounded-xl transition-transform duration-300 hover:scale-105">
   </div>
 
-  {{-- ✅ ข้อมูลสินค้า --}}
+  {{-- ✅ Product Information --}}
   <div>
-    {{-- ชื่อ + ราคา --}}
+    {{-- Name + Price --}}
     <h1 class="text-3xl font-crimson font-bold text-gray-900 leading-snug">{{ $product->name }}</h1>
-    <div class="text-pink-600 font-semibold text-2xl mt-2">฿ {{ number_format($product->price, 2) }}</div>
+    <div class="text-[#C72533] font-semibold text-2xl mt-2">฿ {{ number_format($product->price, 2) }}</div>
 
-    {{-- สต็อก --}}
+    {{-- Stock --}}
     <div class="mt-2">
       @if($product->inStock())
-        <p class="text-green-600 text-sm font-medium">มีสินค้าในสต็อก</p>
-        <p class="text-gray-500 text-xs">เหลือ {{ $product->stock_qty }} ชิ้น</p>
+        <p class="text-green-600 text-sm font-medium">In stock</p>
+        <p class="text-gray-500 text-xs">Only {{ $product->stock_qty }} left</p>
       @else
-        <p class="text-rose-600 text-sm font-medium">สินค้าหมดชั่วคราว</p>
+        <p class="text-rose-600 text-sm font-medium">Out of stock</p>
       @endif
     </div>
 
-    {{-- จำนวน --}}
+    {{-- Quantity --}}
     <div class="mt-6">
       <label class="text-sm font-semibold text-gray-800">Quantity</label>
       <div class="flex items-center mt-2 gap-2">
         <button type="button" onclick="chg(-1)"
-          class="w-8 h-8 flex justify-center items-center bg-pink-100 text-gray-700 rounded-full hover:bg-pink-200 transition">
+          class="w-8 h-8 flex justify-center items-center bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
           –
         </button>
         <input id="qty" value="{{ session('suggested_qty', $qty ?? 1) }}" type="number"
           min="1" max="{{ $product->stock_qty }}" data-stock="{{ $product->stock_qty }}"
-          class="w-16 text-center border border-gray-300 rounded-lg py-1 focus:outline-pink-400">
+          class="w-16 text-center border border-gray-300 rounded-lg py-1 focus:outline-[#6B3E2E] text-gray-800 font-medium">
         <button type="button" onclick="chg(1)"
-          class="w-8 h-8 flex justify-center items-center bg-pink-100 text-gray-700 rounded-full hover:bg-pink-200 transition">
+          class="w-8 h-8 flex justify-center items-center bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition">
           +
         </button>
       </div>
     </div>
 
-    {{-- ปุ่ม --}}
+    {{-- Buttons --}}
     <div class="flex gap-4 mt-8">
       {{-- BUY NOW --}}
       <a id="buyNowLink"
          href="{{ route('checkout.buy', $product) }}?qty={{ session('suggested_qty', $qty ?? 1) }}&return={{ urlencode($return ?? url()->current()) }}"
-         class="px-8 py-3 rounded-lg text-white font-semibold shadow-md transition-all duration-300
-                bg-gradient-to-r from-pink-400 to-rose-500 hover:scale-105 hover:shadow-lg flex items-center justify-center gap-2">
+         class="px-8 py-3 rounded text-white font-semibold shadow-sm transition-all duration-300
+                bg-[#6B3E2E] hover:bg-[#8B5E45] border border-[#6B3E2E]
+                flex items-center justify-center gap-2">
          BUY NOW
       </a>
 
       {{-- ADD TO CART --}}
       @if(Route::has('cart.add'))
-      <form id="addToCartForm" action="{{ route('cart.add') }}" method="POST">
-        @csrf
-        <input type="hidden" name="product_id" value="{{ $product->id }}">
-        <input type="hidden" id="qty_cart" name="qty" value="{{ session('suggested_qty', $qty ?? 1) }}">
-        <button type="submit" id="btnAddToCart"
-          class="px-8 py-3 border-2 border-pink-400 rounded-lg text-pink-600 font-semibold
-                 hover:bg-pink-50 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2">
-           Add To Cart
-        </button>
-      </form>
+      <button type="button" 
+              onclick="addToCart({{ $product->id }}, document.getElementById('qty').value)"
+              class="px-8 py-3 border border-[#6B3E2E] text-[#6B3E2E] font-semibold rounded 
+                    hover:bg-[#6B3E2E] hover:text-white transition-all duration-300
+                    flex items-center justify-center gap-2">
+        Add To Cart
+      </button>
       @endif
     </div>
 
-    <p id="qtyWarn" class="hidden text-sm text-rose-600 mt-3">❗ จำนวนที่เลือกมากกว่าสินค้าที่เหลือ</p>
+    <p id="qtyWarn" class="hidden text-sm text-rose-600 mt-3">❗ The selected quantity exceeds available stock</p>
 
-    {{-- ✅ รายละเอียดสินค้า --}}
+    {{-- ✅ Product Detail --}}
     <div class="mt-10 border-t pt-5">
       <button id="toggleDetail" type="button"
               class="w-full text-left flex justify-between items-center font-semibold text-gray-800">
@@ -157,4 +176,17 @@
     });
   })();
 </script>
+
+{{-- ✅ Hide number input arrows --}}
+<style>
+  input[type=number]::-webkit-inner-spin-button,
+  input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type=number] {
+    -moz-appearance: textfield;
+  }
+</style>
+
 @endsection

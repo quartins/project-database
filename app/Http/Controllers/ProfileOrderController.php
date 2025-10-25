@@ -3,17 +3,29 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use Illuminate\Http\Request;
 
 class ProfileOrderController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        // ดึงเฉพาะออเดอร์ของ user ที่ล็อกอิน
-        $orders = Order::where('user_id', auth()->id())
-            ->with(['items.product'])
-            ->latest()
-            ->paginate(10);
+        // ✅ รับพารามิเตอร์ status จาก URL เช่น /orders?status=paid
+        $status = $request->get('status', 'pending'); // default คือ pending
 
-        return view('profile.orders', compact('orders'));
+        // ✅ Query ออเดอร์เฉพาะของ user ที่ล็อกอิน
+        $query = Order::where('user_id', auth()->id())
+            ->with(['items.product'])
+            ->latest();
+
+        // ✅ กรองตามสถานะ (รองรับ cancelled ด้วย)
+        if (in_array($status, ['pending', 'paid', 'cancelled'])) {
+            $query->where('status', $status);
+        }
+
+        // ✅ ดึงข้อมูล (แบ่งหน้า)
+        $orders = $query->paginate(10);
+
+        // ✅ ส่งไป view
+        return view('profile.orders', compact('orders', 'status'));
     }
 }

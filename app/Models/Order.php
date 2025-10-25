@@ -30,4 +30,10 @@ class Order extends Model
     }
 
     public function isPaid(): bool { return $this->status === 'paid'; }
+
+    public function shippingAddress()
+    {
+        return $this->belongsTo(\App\Models\Address::class, 'shipping_address_id');
+    }
+
 }

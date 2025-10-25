@@ -13,15 +13,36 @@
       </button>
     </div>
 
-    {{-- ✅ Success message --}}
-    @if(session('ok'))
-      <div class="mb-4 text-green-700 bg-green-50 border border-green-200 px-4 py-2 rounded">
-        {{ session('ok') }}
-      </div>
-    @endif
+      {{-- ✅ Success message --}}
+      @if(session('ok'))
+        <div id="flash-message" class="mb-4 text-green-700 bg-green-50 border border-green-200 px-4 py-2 rounded">
+          {{ session('ok') }}
+        </div>
+      @endif
+
+      @if(session('success'))
+        <div id="flash-message" class="mb-4 text-green-700 bg-green-50 border border-green-200 px-4 py-2 rounded">
+          {{ session('success') }}
+        </div>
+      @endif
+
+      {{-- 🧠 Flash message auto-hide --}}
+      <script>
+        // Automatically fade out flash messages after 3 seconds
+        document.addEventListener('DOMContentLoaded', () => {
+          const flash = document.getElementById('flash-message');
+          if (flash) {
+            setTimeout(() => {
+              flash.style.transition = 'opacity 0.8s ease';
+              flash.style.opacity = '0';
+              setTimeout(() => flash.remove(), 800);
+            }, 1000);
+          }
+        });
+      </script>
 
     {{-- 🧩 Add new address form --}}
-    <form id="add-form" method="POST" action="{{ route('address.add') }}"
+    <form id="add-form" method="POST" action="{{ route('profile.address.store') }}"
           class="hidden border-t pt-4 grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 bg-pink-50 p-4 rounded-xl shadow-sm">
       @csrf
 
@@ -74,7 +95,7 @@
       </div>
     </form>
 
-    {{-- 📦 Address list --}}
+    {{-- Address list --}}
     <div class="grid grid-cols-1 gap-4">
       @forelse($addresses as $addr)
         <div class="border border-gray-200 rounded-xl p-4 shadow-sm hover:shadow-md transition bg-white relative">
@@ -96,7 +117,7 @@
               @if($addr->is_default)
                 <span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-0.5 rounded">Default</span>
               @else
-                <form action="{{ route('address.setDefault', $addr->id) }}" method="POST" class="inline">
+                <form action="{{ route('profile.address.default', $addr->id) }}" method="POST" class="inline">
                   @csrf
                   <button class="text-xs text-rose-700 hover:underline">Set as Default</button>
                 </form>
@@ -108,7 +129,7 @@
               <button onclick="openEditModal({{ json_encode($addr) }})"
                       class="text-xs text-blue-600 hover:text-blue-800 transition">Edit</button>
 
-              <form action="{{ route('address.delete', $addr->id) }}" method="POST" onsubmit="return confirm('Delete this address?')">
+              <form action="{{ route('profile.address.delete', $addr->id) }}" method="POST" onsubmit="return confirm('Delete this address?')">
                 @csrf
                 @method('DELETE')
                 <button class="text-xs text-gray-500 hover:text-red-600 transition">Delete</button>
@@ -131,7 +152,7 @@
     <h2 class="text-xl font-semibold mb-4">Edit Address</h2>
     <form id="editForm" method="POST">
       @csrf
-      @method('PATCH')
+      @method('PUT')
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <input type="hidden" name="address_id" id="edit_id">
 

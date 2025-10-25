@@ -1,194 +1,280 @@
-{{-- resources/views/checkout/summary.blade.php --}}
 @extends('layouts.app')
 
 @section('content')
-<div class="grid lg:grid-cols-3 gap-8">
+<div x-data="addressModal()" class="max-w-6xl mx-auto grid lg:grid-cols-3 gap-8 py-10 px-6 relative">
 
-  {{-- LEFT: Address + Coupon (แยกฟอร์ม ไม่ซ้อนกัน) --}}
+  {{-- LEFT CONTENT --}}
   <div class="lg:col-span-2 space-y-6">
 
-    <div class="flex items-center justify-between">
-      <h2 class="text-3xl font-semibold">Order Summary</h2>
-      <a href="{{ $returnUrl }}" class="text-[#5a362e] underline hover:opacity-80">
-        ← กลับไปหน้า Detail
-      </a>
+    {{-- 🧾 TITLE --}}
+    <div class="flex items-center gap-2 mt-6">
+      <button onclick="history.back()" 
+              class="flex items-center text-[#4B3B34] hover:text-[#8B5E45] transition">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" 
+             viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" 
+             class="w-6 h-6 mr-1">
+          <path stroke-linecap="round" stroke-linejoin="round" 
+                d="M15.75 19.5L8.25 12l7.5-7.5" />
+        </svg>
+      </button>
+      <h2 class="text-3xl font-bold text-[#3A2A23]">Order Summary</h2>
     </div>
 
-    {{-- แจ้งเตือนจากฝั่ง server (เช่น stock ไม่พอ) --}}
-    @if(session('flash_err'))
-      <div class="p-3 rounded-lg bg-rose-50 text-rose-700 border border-rose-200">
-        {{ session('flash_err') }}
-      </div>
-    @endif
-    @if ($errors->any())
-      <div class="p-3 rounded-lg bg-rose-50 text-rose-700 border border-rose-200">
-        กรุณาตรวจสอบข้อมูลให้ครบถ้วน
-      </div>
-    @endif
-
-    {{-- ========== ฟอร์มที่อยู่ (ฟอร์มหลัก) ========== --}}
-    <form id="addressForm" class="bg-white rounded-2xl shadow p-6 space-y-5"
-          action="{{ route('checkout.update',$order) }}" method="POST">
-      @csrf
-      <div class="text-lg font-semibold mb-1">Shipping Address</div>
-      <p class="text-sm text-gray-500 -mt-2">กรอกแค่ช่องที่มี * ก็เพียงพอ (เหมือนเว็บใหญ่ ๆ)</p>
-
-      <div class="grid md:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-sm text-gray-600 mb-1">Full name *</label>
-          <input name="recipient_name" class="input" autocomplete="name"
-                 value="{{ old('recipient_name', $order->recipient_name) }}" required>
-        </div>
-        <div>
-          <label class="block text-sm text-gray-600 mb-1">Phone</label>
-          <input name="phone" class="input" autocomplete="tel"
-                 value="{{ old('phone', $order->phone) }}">
-        </div>
-
-        <div class="md:col-span-2">
-          <label class="block text-sm text-gray-600 mb-1">Address line 1 *</label>
-          <input name="address_line1" class="input" autocomplete="address-line1"
-                 value="{{ old('address_line1', $order->address_line1) }}" required>
-        </div>
-
-        <div class="md:col-span-2">
-          <label class="block text-sm text-gray-600 mb-1">Address line 2</label>
-          <input name="address_line2" class="input" autocomplete="address-line2"
-                 value="{{ old('address_line2', $order->address_line2) }}">
-        </div>
-
-        <div>
-          <label class="block text-sm text-gray-600 mb-1">District</label>
-          <input name="district" class="input" autocomplete="address-level2"
-                 value="{{ old('district', $order->district) }}">
-        </div>
-
-        <div>
-          <label class="block text-sm text-gray-600 mb-1">Province</label>
-          <input name="province" class="input" autocomplete="address-level1"
-                 value="{{ old('province', $order->province) }}">
-        </div>
-
-        <div>
-          <label class="block text-sm text-gray-600 mb-1">Postcode</label>
-          <input name="postcode" class="input" inputmode="numeric" pattern="[0-9]*"
-                 autocomplete="postal-code" value="{{ old('postcode', $order->postcode) }}">
-        </div>
-
-        <div>
-          <label class="block text-sm text-gray-600 mb-1">Country</label>
-          <input name="country" class="input" autocomplete="country-name"
-                 value="{{ old('country', $order->country ?? 'Thailand') }}">
-        </div>
+    {{-- 📦 Address --}}
+    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+      <div class="flex justify-between items-center mb-2">
+        <h3 class="font-semibold text-lg text-gray-800">Address Book :</h3>
+        <a href="javascript:void(0)" @click="openModal()" class="text-sm text-[#6B3E2E] hover:underline">Edit</a>
       </div>
 
-      {{-- Delivery --}}
-      <div class="mt-4 bg-gradient-to-r from-rose-50 to-pink-50 rounded-xl p-4 border border-pink-100">
-        <div class="flex items-center gap-2">
-          <input type="hidden" name="shipping_fee" value="35.00">
-          <span class="px-4 py-2 rounded border bg-white">Express</span>
-          <span class="ml-auto text-sm text-gray-700">฿ 35.00</span>
+      @if($order->shippingAddress)
+        <div class="border border-gray-300 rounded-lg p-4 bg-gray-50">
+          <p class="text-sm text-gray-800 font-semibold">
+            {{ $order->shippingAddress->recipient_name }}
+            {{ $order->shippingAddress->phone ? '(' . substr_replace($order->shippingAddress->phone, '*****', 2, 5) . ')' : '' }}
+          </p>
+          <p class="text-sm text-gray-600 mt-1">
+            {{ $order->shippingAddress->address_line1 }},
+            {{ $order->shippingAddress->district }},
+            {{ $order->shippingAddress->province }},
+            {{ $order->shippingAddress->postcode }}
+          </p>
         </div>
-      </div>
-    </form>
+      @elseif($defaultAddress)
+        <div class="border border-gray-300 rounded-lg p-4 bg-gray-50">
+          <p class="text-sm text-gray-800 font-semibold">
+            {{ $defaultAddress->recipient_name }}
+            {{ $defaultAddress->phone ? '(' . substr_replace($defaultAddress->phone, '*****', 2, 5) . ')' : '' }}
+          </p>
+          <p class="text-sm text-gray-600 mt-1">
+            {{ $defaultAddress->address_line1 }},
+            {{ $defaultAddress->district }},
+            {{ $defaultAddress->province }},
+            {{ $defaultAddress->postcode }}
+          </p>
+        </div>
+      @else
+        <p class="text-gray-500 text-sm italic">
+          No address yet. 
+          <a href="javascript:void(0)" @click="openModal()" class="text-[#6B3E2E] underline">Add Address</a>
+        </p>
+      @endif
+    </div>
 
-    {{-- ========== ฟอร์มคูปอง (ฟอร์มแยก) ========== --}}
-    <div class="bg-white rounded-2xl border border-gray-100 p-4">
-      <div class="flex items-center justify-between mb-3">
-        <div class="text-lg font-semibold">COUPON (optional)</div>
-        @if($order->discount > 0)
-          <span class="text-green-700 text-sm">ใช้คูปองแล้ว ✔︎</span>
-        @endif
+    {{-- 🚚 Delivery --}}
+    <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+      <h3 class="font-semibold mb-2 text-gray-800">Delivery :</h3>
+      <div class="border border-gray-300 rounded-lg p-3 flex justify-between items-center bg-gray-50">
+        <span>Express</span>
+        <span>฿ {{ number_format($order->shipping_fee ?? 35, 2) }}</span>
       </div>
+    </div>
 
-      {{-- Alerts --}}
+    {{-- 🎟 Coupon --}}
+    <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+      <h3 class="font-semibold mb-2 text-gray-800">COUPON :</h3>
+
       @if(session('coupon_ok'))
-        <div class="p-3 rounded-lg bg-green-50 text-green-700 border border-green-200 mb-3">
-          {{ session('coupon_ok') }}
-        </div>
+        <p class="p-2 mb-2 rounded text-green-700 bg-green-50 border border-green-200">{{ session('coupon_ok') }}</p>
       @endif
       @if(session('coupon_err'))
-        <div class="p-3 rounded-lg bg-rose-50 text-rose-700 border border-rose-200 mb-3">
-          {{ session('coupon_err') }}
-        </div>
-      @endif
-      @if(session('coupon_info'))
-        <div class="p-3 rounded-lg bg-blue-50 text-blue-700 border border-blue-200 mb-3">
-          {{ session('coupon_info') }}
-        </div>
+        <p class="p-2 mb-2 rounded text-rose-700 bg-rose-50 border border-rose-200">{{ session('coupon_err') }}</p>
       @endif
 
-      <form id="couponForm" class="flex gap-3" method="POST" action="{{ route('checkout.applyCoupon',$order) }}">
+      <form method="POST" action="{{ route('checkout.applyCoupon', $order) }}" class="flex gap-2">
         @csrf
-        <input name="coupon_code" class="input flex-1" autocomplete="one-time-code"
-               placeholder="Enter code (e.g., chamora)"
-               value="{{ old('coupon_code', $order->coupon_code) }}">
+        <input name="coupon_code"
+               value="{{ old('coupon_code', $order->coupon_code) }}"
+               placeholder="Please enter the coupon code"
+               class="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-300 text-sm">
         <button type="submit"
-                class="px-6 rounded-lg text-white font-semibold bg-[#5a362e] hover:opacity-90">
+                class="bg-[#6B3E2E] hover:bg-[#8B5E45] text-white px-6 rounded-lg font-semibold text-sm transition">
           APPLY
         </button>
       </form>
-      <p class="text-sm text-gray-500 mt-2">ไม่ใส่ก็ได้ — ใช้โค้ด <b>chamora</b> ลด 15% ของค่าสินค้า</p>
+      <p class="text-xs text-gray-500 mt-2">Use code <b>chamora</b> to get 15% off your product total.</p>
     </div>
-
   </div>
 
-  {{-- RIGHT: Sticky Order Summary + ปุ่มไปหน้าชำระเงิน (ส่งฟอร์มที่อยู่) --}}
-  <aside class="bg-white rounded-2xl shadow p-5 h-fit lg:sticky lg:top-6">
-    <div class="text-xl font-semibold mb-3">Order Summary</div>
-
+  {{-- RIGHT SUMMARY --}}
+  <aside class="bg-white rounded-2xl shadow p-6 h-fit lg:sticky lg:top-8">
+    <h3 class="text-xl font-bold mb-4 text-gray-800">Order Summary</h3>
     <div class="space-y-2 text-sm">
       <div class="flex justify-between"><span>Subtotal</span><span>฿ {{ number_format($order->subtotal,2) }}</span></div>
-      <div class="flex justify-between"><span>Shipping</span><span>฿ {{ number_format($order->shipping_fee,2) }}</span></div>
-      <div class="flex justify-between"><span>Discount</span><span>- ฿ {{ number_format($order->discount,2) }}</span></div>
-      <hr>
+      <div class="flex justify-between"><span>Shipping</span><span>฿ {{ number_format($order->shipping_fee ?? 35,2) }}</span></div>
+      <hr class="my-2">
       <div class="flex justify-between font-semibold text-lg">
         <span>Total</span><span>฿ {{ number_format($order->total,2) }} <span class="text-xs">THB</span></span>
       </div>
     </div>
 
+    {{-- 🧸 Order List --}}
     <div class="mt-4 text-sm">
-      <div class="font-semibold mb-2">Your Order {{ $order->items->count() }} item</div>
+      <div class="font-semibold mb-2 text-gray-700">Your Order {{ $order->items->count() }} item</div>
       @foreach($order->items as $it)
-        <div class="flex items-center gap-3 text-sm py-2 border-b last:border-0">
-          <img class="w-14 h-14 object-contain rounded" src="{{ asset($it->product->image_url) }}">
+        <div class="flex items-center gap-3 py-2 border-b last:border-0">
+          <img src="{{ asset($it->product->image_url) }}" alt="{{ $it->product->name }}" class="w-14 h-14 object-contain rounded">
           <div class="flex-1">
-            <div>{{ $it->product->name }}</div>
-            <div class="text-gray-500">฿ {{ number_format($it->unit_price,0) }}</div>
+            <p>{{ $it->product->name }}</p>
+            <p class="text-gray-500 text-sm">฿ {{ number_format($it->unit_price,0) }}</p>
           </div>
-          <div class="text-gray-500">QTY: {{ $it->qty }}</div>
+          <span class="text-gray-500 text-sm">QTY: {{ $it->qty }}</span>
         </div>
       @endforeach
     </div>
 
-    {{-- ปุ่มเดียว ส่งฟอร์มที่อยู่ (addressForm) --}}
-    <button form="addressForm"
-            class="mt-5 w-full bg-gradient-to-r from-pink-500 to-rose-500 text-white py-3 rounded-xl shadow
-                   hover:shadow-md hover:scale-[1.01] transition">
-      ไปหน้าชำระเงิน
-    </button>
+    <form action="{{ route('checkout.payment', $order) }}" method="POST" class="mt-6">
+      @csrf
+      <button type="submit"
+              class="w-full bg-gradient-to-r from-[#8B5E45] to-[#4B3B34] text-white py-3 rounded-xl font-semibold 
+                     hover:shadow-lg hover:scale-[1.02] transition">
+        Check Out
+      </button>
+    </form>
   </aside>
+
+  {{-- ✅ Modal --}}
+  <div x-show="openAddress" 
+       x-transition 
+       @click.self="closeModal" 
+       class="fixed inset-0 bg-black/40 flex justify-end z-50">
+
+    <div class="bg-white w-full max-w-md h-full p-6 overflow-y-auto shadow-xl rounded-l-2xl">
+      <div class="flex justify-between items-center border-b pb-3 mb-4">
+        <h2 class="text-lg font-bold text-gray-700">My Address</h2>
+        <button @click="closeModal" class="text-gray-500 hover:text-gray-800 text-2xl leading-none">&times;</button>
+      </div>
+
+      {{-- รายการที่อยู่ --}}
+      <template x-for="addr in addresses" :key="addr.id">
+        <div class="border rounded-lg p-3 mb-3 bg-gray-50 hover:bg-pink-50 transition cursor-pointer"
+             @click="selectAddress(addr)">
+          <div class="flex justify-between">
+            <div>
+              <p class="font-semibold" x-text="addr.recipient_name"></p>
+              <p class="text-sm text-gray-600" x-text="addr.phone"></p>
+              <p class="text-sm text-gray-600" 
+                 x-text="`${addr.address_line1}, ${addr.district}, ${addr.province}, ${addr.postcode}`"></p>
+            </div>
+            <button @click.stop="startEdit(addr)" 
+                    class="text-[#6B3E2E] text-sm underline hover:text-[#8B5E45]">Edit</button>
+          </div>
+        </div>
+      </template>
+
+      {{-- ปุ่ม + Add New --}}
+      <div x-show="!showAddForm && !editing" class="mt-6 border-t pt-4">
+        <button @click="showAddForm = true"
+                class="w-full bg-[#6B3E2E] text-white py-2 rounded hover:bg-[#8B5E45]">
+          + Add New Address
+        </button>
+      </div>
+
+      {{-- ฟอร์มเพิ่มที่อยู่ใหม่ --}}
+      <div x-show="showAddForm && !editing" x-cloak class="mt-6 border-t pt-4">
+        <h3 class="font-semibold text-gray-700 mb-2">Add New Address</h3>
+        <input x-model="form.recipient_name" placeholder="Name" class="border w-full mb-2 p-2 rounded">
+        <input x-model="form.phone" placeholder="Phone" class="border w-full mb-2 p-2 rounded">
+        <input x-model="form.address_line1" placeholder="Address line 1" class="border w-full mb-2 p-2 rounded">
+        <input x-model="form.district" placeholder="District" class="border w-full mb-2 p-2 rounded">
+        <input x-model="form.province" placeholder="Province" class="border w-full mb-2 p-2 rounded">
+        <input x-model="form.postcode" placeholder="Postcode" class="border w-full mb-2 p-2 rounded">
+        <div class="flex gap-2">
+          <button @click="saveAddress()" 
+                  class="w-1/2 bg-[#6B3E2E] text-white py-2 rounded hover:bg-[#8B5E45]">Save</button>
+          <button @click="cancelAdd()" 
+                  class="w-1/2 bg-gray-200 text-gray-700 py-2 rounded hover:bg-gray-300">Cancel</button>
+        </div>
+      </div>
+
+      {{-- แก้ไขที่อยู่ --}}
+      <template x-if="editing">
+        <div x-cloak class="mt-6 border-t pt-4">
+          <h3 class="font-semibold text-gray-700 mb-2">Edit Address</h3>
+          <input x-model="editing.recipient_name" placeholder="Name" class="border w-full mb-2 p-2 rounded">
+          <input x-model="editing.phone" placeholder="Phone" class="border w-full mb-2 p-2 rounded">
+          <input x-model="editing.address_line1" placeholder="Address" class="border w-full mb-2 p-2 rounded">
+          <input x-model="editing.postcode" placeholder="Postcode" class="border w-full mb-2 p-2 rounded">
+          <div class="flex gap-2">
+            <button @click="updateAddress()" class="w-1/2 bg-[#6B3E2E] text-white py-2 rounded hover:bg-[#8B5E45]">Update</button>
+            <button @click="cancelEdit()" class="w-1/2 bg-gray-200 text-gray-700 py-2 rounded hover:bg-gray-300">Cancel</button>
+          </div>
+        </div>
+      </template>
+
+    </div>
+  </div>
 </div>
 
-<style>
-  .input{ @apply w-full border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-pink-300; }
-</style>
-
-{{-- คัดลอกค่าจากฟอร์มที่อยู่ไปฟอร์มคูปอง ก่อน submit เพื่อให้ค่าไม่หาย --}}
 <script>
-  document.getElementById('couponForm').addEventListener('submit', function () {
-    const src = document.getElementById('addressForm').elements;
-    for (const el of src) {
-      if (!el.name) continue;
-      let h = this.querySelector('input[type="hidden"][name="'+el.name+'"]');
-      if (!h) {
-        h = document.createElement('input');
-        h.type = 'hidden';
-        h.name = el.name;
-        this.appendChild(h);
-      }
-      h.value = el.value;
+document.addEventListener('alpine:init', () => {
+  Alpine.data('addressModal', () => ({
+    openAddress: false,
+    addresses: [],
+    editing: null,
+    showAddForm: false,
+    form: { recipient_name: '', phone: '', address_line1: '', district: '', province: '', postcode: '', country: 'Thailand' },
+
+    openModal() { this.openAddress = true; this.loadAddresses(); this.showAddForm = false; this.editing = null; },
+    closeModal() { this.openAddress = false; this.showAddForm = false; this.editing = null; },
+
+    loadAddresses() {
+      fetch('{{ route('profile.address.list') }}')
+        .then(res => res.json())
+        .then(data => this.addresses = data);
+    },
+
+    selectAddress(addr) {
+      fetch(`/checkout/{{ $order->id }}/address`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify({ address_id: addr.id })
+      })
+      .then(async r => {
+        const text = await r.text();
+        try { return JSON.parse(text); } catch { throw new Error(text); }
+      })
+      .then(res => {
+        alert(res.message || 'Address updated for this order.');
+        this.closeModal();
+        window.location.reload();
+      })
+      .catch(() => alert('Server error: unable to update address.'));
+    },
+
+    startEdit(addr) { this.editing = { ...addr }; },
+    cancelEdit() { this.editing = null; },
+    cancelAdd() { this.showAddForm = false; this.form = { recipient_name: '', phone: '', address_line1: '', district: '', province: '', postcode: '', country: 'Thailand' }; },
+
+    saveAddress() {
+      fetch('{{ route('profile.address.store') }}', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify(this.form)
+      })
+      .then(r => r.json())
+      .then(res => {
+        alert(res.message);
+        this.loadAddresses();
+        this.cancelAdd();
+      });
+    },
+
+    updateAddress() {
+      fetch(`/profile/address/${this.editing.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        body: JSON.stringify(this.editing)
+      })
+      .then(r => r.json())
+      .then(res => {
+        alert(res.message);
+        this.loadAddresses();
+        this.cancelEdit();
+      });
     }
-  });
+  }))
+})
 </script>
+
 @endsection
