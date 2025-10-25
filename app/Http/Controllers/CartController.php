@@ -45,47 +45,84 @@ class CartController extends Controller
 
 
     // เพิ่มสินค้า ตรง icon cart
+    // public function add(Request $request)
+    // {
+    //     // ตรวจสอบว่าผู้ใช้ล็อกอินหรือไม่
+    //     if (!Auth::check()) {
+    //         return redirect()->route('login')->with('error', 'กรุณาล็อกอินก่อน');
+    //     }
+
+    //     $user = Auth::user();
+    //     $product = Product::findOrFail($request->product_id);
+    //     $cart = Cart::firstOrCreate(['user_id' => $user->id]);
+
+    //     $item = CartItem::where('cart_id', $cart->id)
+    //                     ->where('product_id', $product->id)
+    //                     ->first();
+
+    //     // กำหนดจำนวนสินค้า
+    //     $quantity = $request->input('qty', 1);
+
+    //     // ถ้ามีสินค้านี้อยู่ในตะกร้าแล้ว ก็เพิ่มจำนวนสินค้า
+    //     if ($item) {
+    //         $item->quantity += $quantity;
+    //         $item->save();
+    //     } else {
+    //         // ถ้าไม่มีสินค้าในตะกร้า ก็เพิ่มสินค้าตัวใหม่
+    //         CartItem::create([
+    //             'cart_id' => $cart->id,
+    //             'product_id' => $product->id,
+    //             'quantity' => $quantity
+    //         ]);
+    //     }
+
+    //     // คำนวณจำนวนสินค้าทั้งหมดในตะกร้า
+    //     $count = CartItem::where('cart_id', $cart->id)->sum('quantity');
+
+    //     // แสดงข้อความว่าเพิ่มสินค้าสำเร็จแล้ว และรีไดเรคกลับไปที่หน้าตะกร้า
+    //     return redirect()->route('cart.index')->with('success', 'เพิ่มสินค้าในตะกร้าแล้ว');
+    // }
+
     public function add(Request $request)
-{
-    // ตรวจสอบว่าผู้ใช้ล็อกอินหรือไม่
-    if (!Auth::check()) {
-        return redirect()->route('login')->with('error', 'กรุณาล็อกอินก่อน');
-    }
+    {
+        // ถ้ายังไม่ได้ login → ส่ง JSON แจ้งให้ frontend redirect เอง
+        if (!Auth::check()) {
+            return response()->json([
+                'error' => 'unauthenticated'
+            ], 401);
+        }
 
-    $user = Auth::user();
-    $product = Product::findOrFail($request->product_id);
-    $cart = Cart::firstOrCreate(['user_id' => $user->id]);
+        $user = Auth::user();
+        $product = Product::findOrFail($request->product_id);
+        $cart = Cart::firstOrCreate(['user_id' => $user->id]);
 
-    $item = CartItem::where('cart_id', $cart->id)
-                    ->where('product_id', $product->id)
-                    ->first();
+        $item = CartItem::where('cart_id', $cart->id)
+                        ->where('product_id', $product->id)
+                        ->first();
 
-    // กำหนดจำนวนสินค้า
-    $quantity = $request->input('qty', 1);
+        $quantity = $request->input('qty', 1);
 
-    // ถ้ามีสินค้านี้อยู่ในตะกร้าแล้ว ก็เพิ่มจำนวนสินค้า
-    if ($item) {
-        $item->quantity += $quantity;
-        $item->save();
-    } else {
-        // ถ้าไม่มีสินค้าในตะกร้า ก็เพิ่มสินค้าตัวใหม่
-        CartItem::create([
-            'cart_id' => $cart->id,
-            'product_id' => $product->id,
-            'quantity' => $quantity
+        if ($item) {
+            $item->quantity += $quantity;
+            $item->save();
+        } else {
+            CartItem::create([
+                'cart_id'    => $cart->id,
+                'product_id' => $product->id,
+                'quantity'   => $quantity,
+            ]);
+        }
+
+        // ✅ คำนวณจำนวนรวมสินค้าในตะกร้า
+        $count = CartItem::where('cart_id', $cart->id)->sum('quantity');
+
+        // ✅ คืน JSON แทนการ redirect
+        return response()->json([
+            'message' => 'เพิ่มสินค้าในตะกร้าแล้ว',
+            'cart_count' => $count,
         ]);
     }
-
-    // คำนวณจำนวนสินค้าทั้งหมดในตะกร้า
-    $count = CartItem::where('cart_id', $cart->id)->sum('quantity');
-
-    // แสดงข้อความว่าเพิ่มสินค้าสำเร็จแล้ว และรีไดเรคกลับไปที่หน้าตะกร้า
-    return redirect()->route('cart.index')->with('success', 'เพิ่มสินค้าในตะกร้าแล้ว');
-}
-
     
-
-
     // ลบสินค้า
     public function remove(Request $request)
     {

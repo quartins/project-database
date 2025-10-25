@@ -52,8 +52,13 @@ class RegisteredUserController extends Controller
     event(new Registered($user));
     Auth::login($user);
 
-    return redirect()->intended('/'); 
-}
+    // ✅ ป้องกัน redirect ไป /cart/count หรือ /api/*
+    $intended = session()->pull('url.intended', '/');
+    if (preg_match('/(\/cart\/|\/api\/)/', $intended)) {
+        $intended = '/';
+    }
 
-
+    return redirect($intended);
+    
+    }
 }

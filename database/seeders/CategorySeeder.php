@@ -9,16 +9,25 @@ class CategorySeeder extends Seeder
 {
     public function run(): void
     {
-        $categories = [
-            ['name' => 'Kitty Collection'],
-            ['name' => 'My Melody Collection'],
-            ['name' => 'Kuromi Collection'],
-            ['name' => 'Hirono Collection'],
-            ['name' => 'Twinkle Collection'],
-        ];
-
-        foreach ($categories as $cat) {
-            Category::create($cat);
-        }
+        Category::create([
+            'name' => 'Kitty',
+            'image_url' => 'collection/kitty/kitty1.png', 
+        ]);
+        Category::create([
+            'name' => 'My Melody',
+            'image_url' => 'collection/mymelody/mymelody1.png',
+        ]);
+        Category::create([
+            'name' => 'Kuromi',
+            'image_url' => 'collection/kuromi/kuromi1.png',
+        ]);
+        Category::create([
+            'name' => 'Hirono',
+            'image_url' => 'collection/hirono/hirono1.png',
+        ]);
+        Category::create([
+            'name' => 'Twinkle',
+            'image_url' => 'collection/twinkle/twinkle1.png',
+        ]);
     }
 }

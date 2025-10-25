@@ -1,91 +1,86 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="grid md:grid-cols-2 gap-10">
-  {{-- รูปสินค้า --}}
-  <div class="bg-white rounded-xl p-6 shadow">
+<div class="max-w-6xl mx-auto py-10 px-6 grid md:grid-cols-2 gap-12 items-start">
+
+  {{-- ✅ รูปสินค้า --}}
+  <div class="bg-white rounded-2xl shadow-lg p-6 flex justify-center items-center">
     <img
       src="{{ asset($product->image_url) }}"
       alt="{{ $product->name }}"
-      class="mx-auto max-h-[520px] object-contain rounded-lg shadow-md">
+      class="mx-auto max-h-[480px] object-contain rounded-xl transition-transform duration-300 hover:scale-105">
   </div>
 
-  {{-- ข้อมูลสินค้า --}}
+  {{-- ✅ ข้อมูลสินค้า --}}
   <div>
     {{-- ชื่อ + ราคา --}}
-    <div class="text-2xl font-semibold">{{ $product->name }}</div>
-    <div class="text-rose-600 font-semibold text-xl mt-2">{{ $product->formatted_price }}</div>
-
-    {{-- แจ้งเตือน --}}
-    @if(session('flash_err'))
-      <div class="mt-3 p-3 rounded-lg bg-rose-50 text-rose-700 border border-rose-200">
-        {{ session('flash_err') }}
-      </div>
-    @endif
+    <h1 class="text-3xl font-crimson font-bold text-gray-900 leading-snug">{{ $product->name }}</h1>
+    <div class="text-pink-600 font-semibold text-2xl mt-2">฿ {{ number_format($product->price, 2) }}</div>
 
     {{-- สต็อก --}}
-    <div class="mt-1 text-sm {{ $product->inStock() ? 'text-green-600':'text-rose-600' }}">
-      {{ $product->inStock() ? 'มีสินค้าในสต็อก' : 'สินค้าหมดชั่วคราว' }}
+    <div class="mt-2">
+      @if($product->inStock())
+        <p class="text-green-600 text-sm font-medium">มีสินค้าในสต็อก</p>
+        <p class="text-gray-500 text-xs">เหลือ {{ $product->stock_qty }} ชิ้น</p>
+      @else
+        <p class="text-rose-600 text-sm font-medium">สินค้าหมดชั่วคราว</p>
+      @endif
     </div>
-    @if($product->inStock())
-      <div class="text-xs text-gray-500 mt-1">เหลือ {{ $product->stock_qty }} ชิ้น</div>
-    @endif
 
-    {{-- ควบคุมจำนวน --}}
-    <div class="mt-6 space-y-3">
-      <div class="text-sm font-medium">Quantity</div>
-      <div class="flex items-center gap-2">
-        <button type="button" class="px-3 py-1 border rounded" onclick="chg(-1)">-</button>
-        <input
-          id="qty"
-          value="{{ session('suggested_qty', $qty ?? 1) }}"
-          type="number"
-          min="1"
-          max="{{ $product->stock_qty }}"
-          data-stock="{{ $product->stock_qty }}"
-          class="w-16 text-center border rounded py-1">
-        <button type="button" class="px-3 py-1 border rounded" onclick="chg(1)">+</button>
+    {{-- จำนวน --}}
+    <div class="mt-6">
+      <label class="text-sm font-semibold text-gray-800">Quantity</label>
+      <div class="flex items-center mt-2 gap-2">
+        <button type="button" onclick="chg(-1)"
+          class="w-8 h-8 flex justify-center items-center bg-pink-100 text-gray-700 rounded-full hover:bg-pink-200 transition">
+          –
+        </button>
+        <input id="qty" value="{{ session('suggested_qty', $qty ?? 1) }}" type="number"
+          min="1" max="{{ $product->stock_qty }}" data-stock="{{ $product->stock_qty }}"
+          class="w-16 text-center border border-gray-300 rounded-lg py-1 focus:outline-pink-400">
+        <button type="button" onclick="chg(1)"
+          class="w-8 h-8 flex justify-center items-center bg-pink-100 text-gray-700 rounded-full hover:bg-pink-200 transition">
+          +
+        </button>
       </div>
+    </div>
 
-      <div class="flex gap-4 pt-2 items-center">
-        {{-- BUY NOW --}}
-        <a
-          id="buyNowLink"
-          href="{{ route('checkout.buy', $product) }}?qty={{ session('suggested_qty', $qty ?? 1) }}&return={{ urlencode($return ?? url()->current()) }}"
-          class="px-8 py-3 rounded-lg text-white font-semibold shadow-md transition-all duration-200
-                 bg-gradient-to-r from-pink-500 to-rose-500 hover:scale-105 hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
-          💕 BUY NOW
-        </a>
+    {{-- ปุ่ม --}}
+    <div class="flex gap-4 mt-8">
+      {{-- BUY NOW --}}
+      <a id="buyNowLink"
+         href="{{ route('checkout.buy', $product) }}?qty={{ session('suggested_qty', $qty ?? 1) }}&return={{ urlencode($return ?? url()->current()) }}"
+         class="px-8 py-3 rounded-lg text-white font-semibold shadow-md transition-all duration-300
+                bg-gradient-to-r from-pink-400 to-rose-500 hover:scale-105 hover:shadow-lg flex items-center justify-center gap-2">
+         BUY NOW
+      </a>
 
-       {{-- ปุ่ม Add to Cart --}}
-@if(Route::has('cart.add'))
-    <form id="addToCartForm" action="{{ route('cart.add') }}" method="POST">
+      {{-- ADD TO CART --}}
+      @if(Route::has('cart.add'))
+      <form id="addToCartForm" action="{{ route('cart.add') }}" method="POST">
         @csrf
         <input type="hidden" name="product_id" value="{{ $product->id }}">
         <input type="hidden" id="qty_cart" name="qty" value="{{ session('suggested_qty', $qty ?? 1) }}">
-        <button type="submit"
-                id="btnAddToCart"
-                class="px-8 py-3 border-2 border-rose-400 rounded-lg text-rose-600 font-semibold
-                       hover:bg-rose-50 hover:scale-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed">
-            🛍️ Add To Cart
+        <button type="submit" id="btnAddToCart"
+          class="px-8 py-3 border-2 border-pink-400 rounded-lg text-pink-600 font-semibold
+                 hover:bg-pink-50 hover:scale-105 transition-all duration-300 flex items-center justify-center gap-2">
+           Add To Cart
         </button>
-    </form>
-@endif
-
-
-      </div>
-
-      <div id="qtyWarn" class="hidden text-sm text-rose-600 mt-2">❗ จำนวนที่เลือกมากกว่าสินค้าที่เหลือ</div>
+      </form>
+      @endif
     </div>
 
-    {{-- Detail --}}
-    <div class="mt-8 border-t pt-4">
-      <button id="toggleDetail" type="button" class="w-full text-left flex justify-between items-center">
-        <span class="font-semibold">Detail</span>
-        <span id="arrow" class="transition">▾</span>
+    <p id="qtyWarn" class="hidden text-sm text-rose-600 mt-3">❗ จำนวนที่เลือกมากกว่าสินค้าที่เหลือ</p>
+
+    {{-- ✅ รายละเอียดสินค้า --}}
+    <div class="mt-10 border-t pt-5">
+      <button id="toggleDetail" type="button"
+              class="w-full text-left flex justify-between items-center font-semibold text-gray-800">
+        <span>Detail</span>
+        <span id="arrow" class="transition text-gray-500">▾</span>
       </button>
 
-      <div id="detailBox" class="mt-3 space-y-2">
+      <div id="detailBox" class="mt-4 space-y-2 text-gray-700">
         @if(!empty($product->formatted_size))
           <div><span class="font-semibold">Size:</span> {{ $product->formatted_size }}</div>
         @endif
@@ -104,49 +99,40 @@
         @endif
 
         @if(!empty($product->description))
-          <div class="text-gray-700">{{ $product->description }}</div>
+          <div class="text-gray-600">{{ $product->description }}</div>
         @endif
 
         @if(!empty($product->sku))
-          <div class="text-xs text-gray-400">SKU: {{ $product->sku }}</div>
+          <div class="text-xs text-gray-400 mt-3">SKU: {{ $product->sku }}</div>
         @endif
       </div>
     </div>
   </div>
 </div>
 
+{{-- ✅ Script --}}
 <script>
   function clampQty(q) {
     const stock = parseInt(document.getElementById('qty').dataset.stock || '0', 10);
     return Math.max(1, Math.min(q, stock));
   }
-
   function setButtonsDisabled(disabled) {
-    const buy = document.getElementById('buyNowLink');
-    const add = document.getElementById('btnAddToCart');
-    const warn = document.getElementById('qtyWarn');
-    if (buy) buy.toggleAttribute('disabled', disabled);
-    if (add) add.toggleAttribute('disabled', disabled);
-    if (warn) warn.classList.toggle('hidden', !disabled);
+    document.getElementById('buyNowLink')?.toggleAttribute('disabled', disabled);
+    document.getElementById('btnAddToCart')?.toggleAttribute('disabled', disabled);
+    document.getElementById('qtyWarn')?.classList.toggle('hidden', !disabled);
   }
-
   function syncQty(val) {
     val = clampQty(val);
     const buy = document.getElementById('buyNowLink');
     if (buy) {
-      try {
-        const url = new URL(buy.href, window.location.origin);
-        url.searchParams.set('qty', val);
-        buy.href = url.toString();
-      } catch(e){}
+      const url = new URL(buy.href, window.location.origin);
+      url.searchParams.set('qty', val);
+      buy.href = url.toString();
     }
-    const cartQty = document.getElementById('qty_cart');
-    if (cartQty) cartQty.value = val;
-
+    document.getElementById('qty_cart').value = val;
     const stock = parseInt(document.getElementById('qty').dataset.stock || '0', 10);
     setButtonsDisabled(val > stock || stock <= 0);
   }
-
   function chg(d) {
     const el = document.getElementById('qty');
     const cur = parseInt(el.value || '1', 10) || 1;
@@ -154,7 +140,6 @@
     el.value = next;
     syncQty(next);
   }
-
   (function(){
     const el = document.getElementById('qty');
     el.addEventListener('input', () => {

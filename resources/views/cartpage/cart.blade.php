@@ -65,16 +65,16 @@
                     <span>Total</span>
                     <span id="total">฿ 0.0 THB</span>
                 </div>
-                {{-- ✅ ปุ่ม Check Out: ส่งเฉพาะรายการที่เลือกพร้อมจำนวน --}}
-<form id="checkoutForm" action="{{ route('cart.checkout') }}" method="POST" class="mt-2">
-  @csrf
-  <input type="hidden" name="items" id="itemsField">
-  <button type="submit"
-    class="w-full bg-gradient-to-r from-[#7B4B3A] to-[#C79A8B] text-white
-           font-semibold py-3 rounded-full shadow-md hover:opacity-90 active:translate-y-[1px] transition">
-    Check Out
-  </button>
-</form>
+                {{--  ปุ่ม Check Out: ส่งเฉพาะรายการที่เลือกพร้อมจำนวน --}}
+                <form id="checkoutForm" action="{{ route('cart.checkout') }}" method="POST" class="mt-2">
+                @csrf
+                <input type="hidden" name="items" id="itemsField">
+                <button type="submit"
+                    class="w-full bg-gradient-to-r from-[#7B4B3A] to-[#C79A8B] text-white
+                        font-semibold py-3 rounded-full shadow-md hover:opacity-90 active:translate-y-[1px] transition">
+                    Check Out
+                </button>
+                </form>
 
             </div>
         </div>
@@ -141,7 +141,23 @@
             let qty = parseInt(item.querySelector(".quantity").textContent);
 
             if (e.target.classList.contains("plus-btn")) qty++;
-            if (e.target.classList.contains("minus-btn") && qty > 1) qty--;
+            if (e.target.classList.contains("minus-btn")) {
+            if (qty > 1) qty--;
+            else {
+                await fetch("/cart/remove", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": document.querySelector('meta[name=\"csrf-token\"]')?.content || "{{ csrf_token() }}"
+                    },
+                    body: JSON.stringify({ product_id: productId })
+                });
+                item.remove();
+                updateCartCount();
+                calcSubtotal();
+                return;
+            }
+        }
 
             if (e.target.classList.contains("remove-btn")) {
                 e.preventDefault();
@@ -173,7 +189,7 @@
                                 const cartContainer = document.getElementById("cart-container");
                                 cartContainer.innerHTML = `
                                     <div class="text-center text-gray-500 italic py-10 bg-pink-50 rounded-lg shadow">
-                                        Your cart is empty 💕
+                                        Your cart is empty
                                     </div>
                                 `;
                             }
@@ -211,31 +227,28 @@
 
 
             // --- รวบรวมรายการที่ "ติ๊กเลือก" + จำนวน ก่อน submit ไป backend ---
-const checkoutForm = document.getElementById("checkoutForm");
-if (checkoutForm) {
-  checkoutForm.addEventListener("submit", (e) => {
-    const selected = [];
-    document.querySelectorAll(".cart-item").forEach(item => {
-      const chk = item.querySelector(".item-check");
-      if (chk && chk.checked) {
-        const productId = parseInt(item.dataset.id, 10);
-        const qty = parseInt(item.querySelector(".quantity").textContent, 10) || 1;
-        selected.push({ product_id: productId, qty });
-      }
-    });
+            const checkoutForm = document.getElementById("checkoutForm");
+            if (checkoutForm) {
+            checkoutForm.addEventListener("submit", (e) => {
+                const selected = [];
+                document.querySelectorAll(".cart-item").forEach(item => {
+                const chk = item.querySelector(".item-check");
+                if (chk && chk.checked) {
+                    const productId = parseInt(item.dataset.id, 10);
+                    const qty = parseInt(item.querySelector(".quantity").textContent, 10) || 1;
+                    selected.push({ product_id: productId, qty });
+                }
+                });
 
-    if (selected.length === 0) {
-      e.preventDefault();
-      alert("กรุณาเลือกสินค้าอย่างน้อย 1 รายการ");
-      return;
-    }
+                if (selected.length === 0) {
+                e.preventDefault();
+                alert("Please select at least one item to proceed.");
+                return;
+                }
 
-    document.getElementById("itemsField").value = JSON.stringify(selected);
-  });
-}
-
-
-
+                document.getElementById("itemsField").value = JSON.stringify(selected);
+            });
+            }
 
             const res = await fetch("/cart/update", {
                 method: "POST",
