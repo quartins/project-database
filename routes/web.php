@@ -11,29 +11,29 @@ use App\Http\Controllers\ProfileAddressController;
 use Illuminate\Support\Facades\Route;
 
 /* -------------------------------------------------------------------------- */
-/*  Public (เข้าถึงได้ทุกคน)                                         */
+/* 🌸 Public Routes (เข้าถึงได้ทุกคน)                                         */
 /* -------------------------------------------------------------------------- */
 
-// หน้าแรก
+// 🏠 หน้าแรก
 Route::get('/', [ProductController::class, 'index'])->name('home');
 
-// หน้า About & Contact
-Route::get('/about', fn() => view('about'))->name('about');
-Route::get('/contact', fn() => view('contact'))->name('contact');
+// 📄 Static Pages
+Route::view('/about', 'about')->name('about');
+Route::view('/contact', 'contact')->name('contact');
 
-// ค้นหาสินค้าแบบเรียลไทม์
+// 🔍 Search
 Route::get('/search', [ProductController::class, 'search'])->name('search');
 
-// หน้า Collection ทั้งหมด + รายหมวดหมู่
+// 🧸 Collections
 Route::get('/collections', [CollectionController::class, 'index'])->name('collection.index');
 Route::get('/collections/{category}', [CollectionController::class, 'show'])->name('collection.show');
 
-// รายละเอียดสินค้า
+// 🛍 Product Details
 Route::get('/products/{idSlug}', [ProductController::class, 'show'])
     ->where('idSlug', '[0-9]+(?:-[A-Za-z0-9\-]+)?')
     ->name('products.show');
 
-// Add To Cart (ตรวจ login ภายใน Controller เอง)
+// 🛒 Add to Cart (ไม่ต้องล็อกอิน)
 Route::post('/cart/add', [CartController::class, 'add'])
     ->name('cart.add')
     ->withoutMiddleware('auth');
@@ -42,45 +42,42 @@ Route::post('/cart/add', [CartController::class, 'add'])
 /* 💳 Checkout Flow                                                           */
 /* -------------------------------------------------------------------------- */
 
-// BUY NOW → สร้าง order draft → Summary
 Route::get('/buy/{product}', [CheckoutController::class, 'createFromProduct'])->name('checkout.buy');
-
-// Summary (กรอกที่อยู่ + คูปอง)
 Route::get('/checkout/{order}', [CheckoutController::class, 'summary'])->name('checkout.summary');
 Route::post('/checkout/{order}', [CheckoutController::class, 'update'])->name('checkout.update');
 Route::post('/checkout/{order}/coupon', [CheckoutController::class, 'applyCoupon'])->name('checkout.applyCoupon');
-
-// Payment & Thank You
 Route::get('/payment/{order}', [CheckoutController::class, 'payment'])->name('checkout.payment');
 Route::post('/payment/{order}/confirm', [CheckoutController::class, 'confirm'])->name('checkout.confirm');
 Route::get('/thank-you', [CheckoutController::class, 'thankyou'])->name('checkout.thankyou');
 
 /* -------------------------------------------------------------------------- */
-/*  (ต้องล็อกอิน)                                               */
+/* 🔐 Authenticated Routes (ต้องล็อกอินก่อนเข้าได้)                            */
 /* -------------------------------------------------------------------------- */
 
 Route::middleware(['auth'])->group(function () {
-
-    // Cart routes
+    // 🛒 Cart
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/update', [CartController::class, 'update'])->name('cart.update');
     Route::post('/cart/remove', [CartController::class, 'remove'])->name('cart.remove');
     Route::get('/cart/count', [CartController::class, 'count'])->name('cart.count');
     Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
 
-    // Profile pages
+    // Profile
     Route::get('/myprofile', fn() => redirect()->route('profile.edit'))->name('profile.custom');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Orders & Address
+    //Orders & Address
     Route::get('/orders', [ProfileOrderController::class, 'index'])->name('orders.index');
     Route::get('/profile/address', [ProfileAddressController::class, 'edit'])->name('address.edit');
     Route::patch('/profile/address', [ProfileAddressController::class, 'update'])->name('address.update');
+
+    Route::post('/profile/address/add', [ProfileAddressController::class, 'store'])->name('address.add');
+    Route::post('/profile/address/{address}/default', [ProfileAddressController::class, 'setDefault'])->name('address.setDefault');
+    Route::delete('/profile/address/{address}', [ProfileAddressController::class, 'destroy'])->name('address.delete');
+
+
 });
 
-/* -------------------------------------------------------------------------- */
-/* Authentication Routes (register, login, logout)                         */
-/* -------------------------------------------------------------------------- */
 require __DIR__.'/auth.php';

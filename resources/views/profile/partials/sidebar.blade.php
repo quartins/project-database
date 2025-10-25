@@ -56,18 +56,18 @@
         </a>
 
         {{-- Address --}}
-        <a href="{{ route('address.edit') }}"
-   class="{{ $linkBase }} {{ $isAddress ? 'text-pink-600 font-bold hover:bg-pink-100' : 'text-gray-800 hover:bg-pink-100' }}">
-    <span class="{{ $iconWrap }}">
-        <svg class="w-4 h-4 {{ $isAddress ? 'text-pink-600' : 'text-gray-800' }}" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7zm0 9.5a2.5 2.5 0 1 1 2.5-2.5A2.5 2.5 0 0 1 12 11.5z"/>
-        </svg>
-        <span>Address</span>
-    </span>
-    <svg class="w-3.5 h-3.5 {{ $isAddress ? 'text-pink-400' : 'text-pink-300' }}" viewBox="0 0 20 20" fill="currentColor">
-        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 0 1 0-1.414L10.586 10 7.293 6.707a1 1 0 1 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0z" clip-rule="evenodd"/>
-    </svg>
-</a>
+        <a href="{{ url('/profile/address') }}"
+            class="{{ $linkBase }} {{ $isAddress ? 'text-pink-600 font-bold hover:bg-pink-100' : 'text-gray-800 hover:bg-pink-100' }}">
+                <span class="{{ $iconWrap }}">
+                    <svg class="w-4 h-4 {{ $isAddress ? 'text-pink-600' : 'text-gray-800' }}" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7zm0 9.5a2.5 2.5 0 1 1 2.5-2.5A2.5 2.5 0 0 1 12 11.5z"/>
+                    </svg>
+                    <span>Address</span>
+                </span>
+                <svg class="w-3.5 h-3.5 {{ $isAddress ? 'text-pink-400' : 'text-pink-300' }}" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 0 1 0-1.414L10.586 10 7.293 6.707a1 1 0 1 1 1.414-1.414l4 4a1 1 0 0 1 0 1.414l-4 4a1 1 0 0 1-1.414 0z" clip-rule="evenodd"/>
+                </svg>
+        </a>
 
 <div class="pt-6">
     <form method="POST" action="{{ route('logout') }}" class="w-full flex justify-center mt-10">
