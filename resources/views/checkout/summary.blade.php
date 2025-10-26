@@ -21,7 +21,8 @@
     </div>
 
     {{-- 📦 Address --}}
-    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm address-box">
+
       <div class="flex justify-between items-center mb-2">
         <h3 class="font-semibold text-lg text-gray-800">Address Book :</h3>
         <a href="javascript:void(0)" @click="openModal()" class="text-sm text-[#6B3E2E] hover:underline">Edit</a>
@@ -123,14 +124,50 @@
       @endforeach
     </div>
 
-    <form action="{{ route('checkout.payment', $order) }}" method="POST" class="mt-6">
+    <form id="checkoutForm" action="{{ route('checkout.payment', $order) }}" method="POST" class="mt-6">
       @csrf
-      <button type="submit"
+      <button type="submit" id="checkoutBtn"
               class="w-full bg-gradient-to-r from-[#8B5E45] to-[#4B3B34] text-white py-3 rounded-xl font-semibold 
-                     hover:shadow-lg hover:scale-[1.02] transition">
+                    hover:shadow-lg hover:scale-[1.02] transition">
         Check Out
       </button>
     </form>
+
+    {{-- 🔔 แจ้งเตือนถ้ายังไม่มี address --}}
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const checkoutForm = document.getElementById('checkoutForm');
+      const checkoutBtn = document.getElementById('checkoutBtn');
+      const hasAddress = @json($order->shippingAddress || $defaultAddress);
+
+      if (!hasAddress) {
+  checkoutForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+
+    // หาช่อง address box
+    const addressBox = document.querySelector('.address-box');
+    if (addressBox) {
+      addressBox.classList.add('border-rose-400', 'bg-rose-50', 'shake');
+      let warning = addressBox.querySelector('.address-warning');
+      if (!warning) {
+        warning = document.createElement('p');
+        warning.className = 'address-warning text-rose-600 text-sm mt-2';
+        warning.textContent = '⚠ Please add your address before checking out.';
+        addressBox.appendChild(warning);
+      }
+
+      // ลบกรอบแดงอัตโนมัติหลัง 3 วินาที
+      setTimeout(() => {
+        addressBox.classList.remove('border-rose-400', 'bg-rose-50', 'shake');
+      }, 3000);
+    }
+  });
+}
+
+    });
+    </script>
+
+
   </aside>
 
   {{-- ✅ Modal --}}

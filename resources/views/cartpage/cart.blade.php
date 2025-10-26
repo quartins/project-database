@@ -225,7 +225,6 @@
                 return;
             }
 
-
             // --- รวบรวมรายการที่ "ติ๊กเลือก" + จำนวน ก่อน submit ไป backend ---
             const checkoutForm = document.getElementById("checkoutForm");
             if (checkoutForm) {

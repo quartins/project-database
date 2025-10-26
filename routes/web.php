@@ -78,7 +78,7 @@ Route::middleware(['auth'])->group(function () {
 
     Route::post('/checkout/{order}/address', [CheckoutController::class, 'updateAddress'])
     ->name('checkout.updateAddress');
-    // ✅ ยกเลิกคำสั่งซื้อ
+    // ยกเลิกคำสั่งซื้อ
     Route::post('/orders/{order}/cancel', [\App\Http\Controllers\CheckoutController::class, 'cancel'])
     ->name('checkout.cancel');
 

@@ -37,7 +37,7 @@ class ProfileAddressController extends Controller
         return view('profile.address', compact('addresses'));
     }
 
-    /** ✅ Add a new address */
+    /** ✅ Add a new address (used by both modal & profile page) */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -53,24 +53,33 @@ class ProfileAddressController extends Controller
 
         $validated['user_id'] = Auth::id();
 
-        //  Check if this user has no address yet
+        // ถ้าเป็นที่อยู่แรกของ user → ตั้งให้เป็น default อัตโนมัติ
         $existingCount = Address::where('user_id', Auth::id())->count();
 
         if ($existingCount === 0) {
-            // If this is the first address, make it default automatically
             $validated['is_default'] = true;
         } elseif ($request->boolean('is_default')) {
-            // Otherwise, if "set as default" is checked, reset previous ones
             Address::where('user_id', Auth::id())->update(['is_default' => false]);
             $validated['is_default'] = true;
         }
 
-        Address::create($validated);
+        $address = Address::create($validated);
 
+        // 🧠 ตรวจว่า request มาจาก fetch (expect JSON) หรือไม่
+        if ($request->expectsJson() || $request->isJson() || $request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => '✅ Address added successfully!',
+                'address' => $address,
+            ]);
+        }
+
+        // 🧩 fallback: ถ้ามาจากหน้า profile ปกติ (form submit)
         return redirect()
             ->route('profile.address.page')
             ->with('success', 'The address has been added successfully.');
     }
+
 
 
     /** Update existing address */
