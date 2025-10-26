@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Order extends Model
 {
@@ -23,9 +24,12 @@ class Order extends Model
     public function items(){ return $this->hasMany(OrderItem::class); }
     public function user(){ return $this->belongsTo(User::class); }
 
-    public function recalc(): void {
-        $this->subtotal = $this->items()->sum('line_total');
+   public function recalc(): void
+    {
+        $this->subtotal = $this->items()->sum(DB::raw('qty * unit_price'));
+
         $this->total = max(0, $this->subtotal + ($this->shipping_fee ?? 0) - ($this->discount ?? 0));
+
         $this->save();
     }
 

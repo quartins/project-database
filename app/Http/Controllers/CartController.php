@@ -96,11 +96,14 @@ class CartController extends Controller
         $product = Product::findOrFail($request->product_id);
         $cart = Cart::firstOrCreate(['user_id' => $user->id]);
 
+         // ✅ ดึงค่า qty จาก request ให้แน่ๆ และ cast เป็น int
+        $quantity = max(1, (int) $request->input('qty', 1));
+
         $item = CartItem::where('cart_id', $cart->id)
                         ->where('product_id', $product->id)
                         ->first();
 
-        $quantity = $request->input('qty', 1);
+        // $quantity = $request->input('qty', 1);
 
         if ($item) {
             $item->quantity += $quantity;
@@ -255,13 +258,19 @@ public function checkout(Request $request)
         ]);
     }
 
-    // (ถ้ามีเมธอด $order->recalc()) จะยิ่งชัวร์:
-    if (method_exists($order, 'recalc')) {
-        $order->recalc();
-    }
+    // ✅ คำนวณยอดรวมใหม่หลังเพิ่มสินค้าเข้า order
+        if (method_exists($order, 'recalc')) {
+            $order->recalc();
+        }
+
+
+    // // (ถ้ามีเมธอด $order->recalc()) จะยิ่งชัวร์:
+    // if (method_exists($order, 'recalc')) {
+    //     $order->recalc();
+    // }
 
     // ✅ ลบเฉพาะรายการที่ "เลือกแล้ว" ออกจากตะกร้า (ไม่ลบทั้งตะกร้า)
-    $cart->cartItems()->whereIn('product_id', $selectedIds)->delete();
+    // $cart->cartItems()->whereIn('product_id', $selectedIds)->delete();
 
     return redirect()->route('checkout.summary', ['order' => $order]);
 }
