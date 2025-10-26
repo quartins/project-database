@@ -13,11 +13,13 @@
         <hr class="border-[#7B4B3A] mb-10">
 
         @if ($items->isEmpty())
-            <div class="text-center text-gray-500 italic py-10 bg-pink-50 rounded-lg shadow">Your cart is empty 💕</div>
+            <div class="text-center text-gray-500 italic py-10 bg-pink-50 rounded-lg shadow">
+                Your cart is empty 💕
+            </div>
         @else
         <div class="flex gap-10 flex-col lg:flex-row">
             {{-- Left --}}
-            <div class="w-full lg:w-2/3 bg-[#FFF8F8] p-6 rounded-lg border border-gray-300 shadow-sm" id="cart-container">
+            <div id="cart-container" class="w-full lg:w-2/3 bg-[#FFF8F8] p-6 rounded-lg border border-gray-300 shadow-sm">
                 <div class="flex items-center mb-4">
                     <input id="select-all" type="checkbox" class="mr-2 w-4 h-4 accent-[#7B4B3A]">
                     <span class="text-sm text-gray-600">select all</span>
@@ -25,11 +27,13 @@
 
                 @foreach ($items as $item)
                     <div class="cart-item flex justify-between items-center border border-gray-300 rounded-md p-4 mb-6"
-                        data-id="{{ $item->product->id }}"
-                        data-price="{{ $item->product->price }}">
+                         data-id="{{ $item->product->id }}"
+                         data-price="{{ $item->product->price }}">
                         <div class="flex items-center gap-5">
                             <input type="checkbox" class="item-check accent-[#7B4B3A]">
-                            <img src="{{ asset($item->product->image_url) }}" alt="{{ $item->product->name }}" class="w-24 h-24 object-contain rounded-md border border-gray-200">
+                            <img src="{{ asset($item->product->image_url) }}"
+                                 alt="{{ $item->product->name }}"
+                                 class="w-24 h-24 object-contain rounded-md border border-gray-200">
                             <div>
                                 <h3 class="font-semibold text-[#7B4B3A]">{{ $item->product->name }}</h3>
                                 <p class="text-gray-700 mt-1 font-medium">฿ {{ number_format($item->product->price, 1) }}</p>
@@ -40,8 +44,8 @@
                             <span class="quantity text-gray-800 font-medium">{{ $item->quantity }}</span>
                             <button class="minus-btn border border-[#7B4B3A] rounded-full w-6 h-6 flex justify-center items-center text-[#7B4B3A] hover:bg-[#7B4B3A] hover:text-white transition">−</button>
                             <button type="button"
-                                class="remove-btn text-gray-400 hover:text-pink-600 text-xl ml-4"
-                                data-id="{{ $item->product->id }}">
+                                    class="remove-btn text-gray-400 hover:text-pink-600 text-xl ml-4"
+                                    data-id="{{ $item->product->id }}">
                                 &times;
                             </button>
                         </div>
@@ -69,12 +73,12 @@
                 {{-- ✅ ปุ่ม Check Out: ส่งเฉพาะสินค้าที่ "ติ๊กเลือก" --}}
                 <form id="checkoutForm" action="{{ route('cart.checkout') }}" method="POST" class="mt-2">
                     @csrf
-                    {{-- Container สำหรับ hidden input ที่จะสร้างผ่าน JS --}}
-                    <div id="selectedItemsContainer"></div>
+                    {{-- ✅ Hidden input ที่ใช้ส่ง JSON --}}
+                    <input type="hidden" name="items" id="itemsField">
 
                     <button type="submit"
                         class="w-full bg-gradient-to-r from-[#7B4B3A] to-[#C79A8B] text-white
-                            font-semibold py-3 rounded-full shadow-md hover:opacity-90 active:translate-y-[1px] transition">
+                               font-semibold py-3 rounded-full shadow-md hover:opacity-90 active:translate-y-[1px] transition">
                         Check Out
                     </button>
                 </form>
@@ -84,6 +88,7 @@
     </div>
 </main>
 @endsection
+
 
 {{-- Script logic --}}
 @section('scripts')
@@ -159,6 +164,12 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
+            if (!itemsField) {
+                e.preventDefault();
+                alert("Missing hidden input field.");
+                return;
+            }
+
             itemsField.value = JSON.stringify(selected);
         });
     }
@@ -183,7 +194,6 @@ document.addEventListener("DOMContentLoaded", () => {
                     },
                     body: JSON.stringify({ product_id: productId })
                 });
-
                 item.remove();
                 updateCartCount();
                 calcSubtotal();
@@ -227,10 +237,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 "Content-Type": "application/json",
                 "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
             },
-            body: JSON.stringify({
-                product_id: productId,
-                quantity: qty
-            })
+            body: JSON.stringify({ product_id: productId, quantity: qty })
         });
 
         if (res.ok) {
@@ -244,22 +251,6 @@ document.addEventListener("DOMContentLoaded", () => {
     selectAll.addEventListener("change", () => {
         document.querySelectorAll(".item-check").forEach(chk => chk.checked = selectAll.checked);
         calcSubtotal();
-        
-        // ✅ รีเซ็ตสถานะทุกครั้งที่กลับมาหน้า cart (เช่นกดปุ่ม back)
-        window.addEventListener("pageshow", function (event) {
-            // ตรวจว่าหน้านี้มาจาก cache หรือไม่ (เช่น navigate back)
-            if (event.persisted || performance.getEntriesByType("navigation")[0].type === "back_forward") {
-                document.querySelectorAll(".item-check").forEach(chk => chk.checked = false);
-                if (document.getElementById("select-all")) document.getElementById("select-all").checked = false;
-                // reset subtotal/total
-                const subtotalEl = document.getElementById("subtotal");
-                const totalEl = document.getElementById("total");
-                if (subtotalEl) subtotalEl.textContent = "฿ 0.0";
-                if (totalEl) totalEl.textContent = "฿ 0.0 THB";
-            }
-        });
-
-
     });
 
     /** 🧷 checkbox เดี่ยว */
@@ -272,6 +263,16 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updateCartCount();
     calcSubtotal();
+
+    // ✅ รีเซ็ต checkbox เมื่อกด back กลับมาหน้า cart
+    window.addEventListener("pageshow", (event) => {
+        if (event.persisted || performance.getEntriesByType("navigation")[0].type === "back_forward") {
+            document.querySelectorAll(".item-check").forEach(chk => chk.checked = false);
+            selectAll.checked = false;
+            subtotalEl.textContent = "฿ 0.0";
+            totalEl.textContent = "฿ 0.0 THB";
+        }
+    });
 });
 </script>
 @endsection

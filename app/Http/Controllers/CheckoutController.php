@@ -206,27 +206,39 @@ class CheckoutController extends Controller
     }
 
     
-    public function confirm(Request $request, Order $order)
-    {
-        if ($order->status === 'paid') {
-            return redirect()->route('checkout.thankyou');
+     public function confirm(Request $request, Order $order)
+        {
+            if ($order->status === 'paid') {
+                return redirect()->route('checkout.thankyou');
+            }
+
+            if ($order->status !== 'pending') {
+                return redirect()->route('checkout.payment', $order)
+                    ->with('flash_err', 'Invalid order status.');
+            }
+
+            // ✅ อัปเดตเป็นชำระเงินแล้ว
+            $order->status  = 'paid';
+            $order->paid_at = now();
+            $order->save();
+            $order->recalc();
+
+            // ✅ เมื่อลูกค้าชำระเงินแล้ว ค่อยลบสินค้าที่อยู่ในตะกร้า
+            $cart = \App\Models\Cart::where('user_id', $order->user_id)->first();
+            if ($cart) {
+                foreach ($order->items as $item) {
+                    $cart->cartItems()->where('product_id', $item->product_id)->delete();
+                }
+            }
+
+            // ✅ เคลียร์ session เดิม
+            session()->forget("order_return_{$order->id}");
+
+            // ✅ ไปหน้า Thank You
+            return redirect()->route('checkout.thankyou')
+                ->with('flash_ok', 'Payment successful! Your order has been confirmed.');
         }
 
-        if ($order->status !== 'pending') {
-            return redirect()->route('checkout.payment', $order)
-                ->with('flash_err', 'Invalid order status.');
-        }
-
-        // ✅ อัปเดตเป็นชำระเงินแล้ว
-        $order->status  = 'paid';
-        $order->paid_at = now();
-        $order->save();
-        $order->recalc();
-
-        session()->forget("order_return_{$order->id}");
-
-        return redirect()->route('checkout.thankyou');
-    }
 
 
     /* -------------------------------------------------------------------------- */
@@ -289,7 +301,5 @@ class CheckoutController extends Controller
         return redirect()->route('orders.index', ['status' => 'pending'])
             ->with('flash_ok', 'Order cancelled successfully.');
     }
-
-
 
 }

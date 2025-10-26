@@ -218,10 +218,11 @@ class CartController extends Controller
             $qty = $qtyMap[$ci->product_id] ?? $ci->quantity ?? 1;
             $order->items()->create([
                 'product_id' => $ci->product_id,
-                'quantity'   => $qty,
+                'qty'        => $qty, // ✅ ใช้ 'qty' ให้ตรง DB
                 'unit_price' => $ci->product->price,
             ]);
         }
+
 
         // (ถ้ามีเมธอด $order->recalc()) จะยิ่งชัวร์:
         if (method_exists($order, 'recalc')) {
@@ -229,7 +230,7 @@ class CartController extends Controller
         }
 
         // ✅ ลบเฉพาะรายการที่ "เลือกแล้ว" ออกจากตะกร้า (ไม่ลบทั้งตะกร้า)
-        $cart->cartItems()->whereIn('product_id', $selectedIds)->delete();
+        //$cart->cartItems()->whereIn('product_id', $selectedIds)->delete();
 
         return redirect()->route('checkout.summary', ['order' => $order]);
     }
