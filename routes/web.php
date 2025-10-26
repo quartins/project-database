@@ -39,14 +39,15 @@ Route::post('/cart/add', [CartController::class, 'add'])
     ->withoutMiddleware('auth');
 
 
-Route::get('/buy/{product}', [CheckoutController::class, 'createFromProduct'])->name('checkout.buy');
-Route::get('/checkout/{order}', [CheckoutController::class, 'summary'])->name('checkout.summary');
-Route::post('/checkout/{order}', [CheckoutController::class, 'update'])->name('checkout.update');
-Route::post('/checkout/{order}/coupon', [CheckoutController::class, 'applyCoupon'])->name('checkout.applyCoupon');
-Route::post('/payment/{order}', [CheckoutController::class, 'payment'])->name('checkout.payment');
-Route::post('/payment/{order}/confirm', [CheckoutController::class, 'confirm'])->name('checkout.confirm');
-Route::get('/thank-you', [CheckoutController::class, 'thankyou'])->name('checkout.thankyou');
-
+Route::middleware(['auth'])->group(function () {
+    Route::get('/buy/{product}', [CheckoutController::class, 'createFromProduct'])->name('checkout.buy');
+    Route::get('/checkout/{order}', [CheckoutController::class, 'summary'])->name('checkout.summary');
+    Route::post('/checkout/{order}', [CheckoutController::class, 'update'])->name('checkout.update');
+    Route::post('/checkout/{order}/coupon', [CheckoutController::class, 'applyCoupon'])->name('checkout.applyCoupon');
+    Route::post('/payment/{order}', [CheckoutController::class, 'payment'])->name('checkout.payment');
+    Route::post('/payment/{order}/confirm', [CheckoutController::class, 'confirm'])->name('checkout.confirm');
+    Route::get('/thank-you', [CheckoutController::class, 'thankyou'])->name('checkout.thankyou');
+});
 
 Route::middleware(['auth'])->group(function () {
 
