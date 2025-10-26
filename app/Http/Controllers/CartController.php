@@ -9,7 +9,6 @@ use App\Models\CartItem;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Order;
 
-
 class CartController extends Controller
 {
     // แสดงหน้าตะกร้า
@@ -45,48 +44,56 @@ class CartController extends Controller
 
     public function add(Request $request)
     {
-        // ถ้ายังไม่ได้ login → ส่ง JSON แจ้งให้ frontend redirect เอง
+        // ถ้ายังไม่ login
         if (!Auth::check()) {
-            return response()->json([
-                'error' => 'unauthenticated'
-            ], 401);
+            if ($request->ajax()) {
+                return response()->json(['ok' => false, 'need_login' => true], 401);
+            }
+            return redirect()->route('login')->with('error', 'กรุณาล็อกอินก่อน');
         }
 
         $user = Auth::user();
         $product = Product::findOrFail($request->product_id);
         $cart = Cart::firstOrCreate(['user_id' => $user->id]);
 
-         // ✅ ดึงค่า qty จาก request ให้แน่ๆ และ cast เป็น int
-        $quantity = max(1, (int) $request->input('qty', 1));
+        // ✅ ดึงจำนวนจาก request (qty หรือ quantity)
+        $qty = max(1, (int) ($request->input('qty') ?? $request->input('quantity', 1)));
 
+        // ✅ ตรวจว่ามี item เดิมไหม
         $item = CartItem::where('cart_id', $cart->id)
                         ->where('product_id', $product->id)
                         ->first();
 
-        // $quantity = $request->input('qty', 1);
-
         if ($item) {
-            $item->quantity += $quantity;
+            $item->quantity += $qty;
             $item->save();
         } else {
             CartItem::create([
                 'cart_id'    => $cart->id,
                 'product_id' => $product->id,
-                'quantity'   => $quantity,
+                'quantity'   => $qty,
             ]);
         }
 
-        // ✅ คำนวณจำนวนรวมสินค้าในตะกร้า
+        // ✅ คำนวณจำนวนรวมใหม่
         $count = CartItem::where('cart_id', $cart->id)->sum('quantity');
 
-        // ✅ คืน JSON แทนการ redirect
-        return response()->json([
-            'message' => 'เพิ่มสินค้าในตะกร้าแล้ว',
-            'cart_count' => $count,
-        ]);
+        // ✅ ถ้าเป็น AJAX (fetch) → ส่ง JSON
+        if ($request->ajax()) {
+            return response()->json([
+                'ok' => true,
+                'cart_count' => $count,
+                'message' => "เพิ่มสินค้า {$qty} ชิ้นในตะกร้าแล้ว!"
+            ]);
+        }
+
+        // ✅ ถ้าเป็น form POST → redirect ไปหน้าตะกร้า
+        return redirect()
+            ->route('cart.index')
+            ->with('success', "เพิ่มสินค้า {$qty} ชิ้นในตะกร้าแล้ว!");
     }
-    
-    // ลบสินค้า
+
+    // ✅ ลบสินค้า
     public function remove(Request $request)
     {
         if (!Auth::check()) {
@@ -109,7 +116,7 @@ class CartController extends Controller
         ]);
     }
 
-    // อัปเดตจำนวนสินค้า
+    // ✅ อัปเดตจำนวนสินค้า
     public function update(Request $request)
     {
         if (!Auth::check()) {
@@ -140,7 +147,7 @@ class CartController extends Controller
         ]);
     }
 
-    // ดึงจำนวนสินค้า (ใช้ตอนโหลดหน้า Home)
+    // ✅ ดึงจำนวนสินค้า (ใช้ตอนโหลดหน้า Home)
     public function count()
     {
         if (!Auth::check()) {
@@ -226,6 +233,5 @@ class CartController extends Controller
 
         return redirect()->route('checkout.summary', ['order' => $order]);
     }
-
 
 }

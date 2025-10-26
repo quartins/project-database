@@ -20,8 +20,6 @@
     </nav>
 </div>
 
-
-
 <div class="max-w-6xl mx-auto py-10 px-6 grid md:grid-cols-2 gap-12 items-start">
   
   {{-- ✅ Product Image --}}
@@ -77,20 +75,26 @@
          BUY NOW
       </a>
 
-      {{-- ADD TO CART --}}
+      {{-- ✅ ADD TO CART (ใช้ logic ของเพื่อนที่รองรับ form + ajax) --}}
       @if(Route::has('cart.add'))
-       <button id="btnAddToCart" type="button"  
-        onclick="addToCart({{ $product->id }})"
-        class="px-8 py-3 border border-[#6B3E2E] text-[#6B3E2E] font-semibold rounded 
-              hover:bg-[#6B3E2E] hover:text-white transition-all duration-300
-              flex items-center justify-center gap-2">
-        Add To Cart
-      </button>
-
+        <form id="addToCartForm" action="{{ route('cart.add') }}" method="POST">
+          @csrf
+          <input type="hidden" name="product_id" value="{{ $product->id }}">
+          <input type="hidden" id="qty_cart" name="qty" value="{{ session('suggested_qty', $qty ?? 1) }}">
+          <button type="submit"
+            id="btnAddToCart"
+            class="px-8 py-3 border border-[#6B3E2E] text-[#6B3E2E] font-semibold rounded 
+                  hover:bg-[#6B3E2E] hover:text-white transition-all duration-300
+                  flex items-center justify-center gap-2">
+            Add To Cart
+          </button>
+        </form>
       @endif
     </div>
 
-    <p id="qtyWarn" class="hidden text-sm text-rose-600 mt-3">❗ The selected quantity exceeds available stock</p>
+    <p id="qtyWarn" class="hidden text-sm text-rose-600 mt-3">
+      ❗ The selected quantity exceeds available stock
+    </p>
 
     {{-- ✅ Product Detail --}}
     <div class="mt-10 border-t pt-5">
@@ -130,31 +134,33 @@
   </div>
 </div>
 
+{{-- ✅ Logic จากเพื่อน (ทำงานกับ CartController ใหม่ได้แน่) --}}
 <script>
-let currentQty = 1; // ✅ เก็บค่าจำนวนสินค้าปัจจุบัน
-
 function clampQty(q) {
   const stock = parseInt(document.getElementById('qty').dataset.stock || '0', 10);
   return Math.max(1, Math.min(q, stock));
 }
 
-function setButtonsDisabled(disabled) {
-  document.getElementById('buyNowLink')?.toggleAttribute('disabled', disabled);
-  document.getElementById('btnAddToCart')?.toggleAttribute('disabled', disabled);
-  document.getElementById('qtyWarn')?.classList.toggle('hidden', !disabled);
-}
-
 function syncQty(val) {
   val = clampQty(val);
-  currentQty = val; // ✅ อัปเดตทุกครั้งที่เปลี่ยน
   const buy = document.getElementById('buyNowLink');
   if (buy) {
     const url = new URL(buy.href, window.location.origin);
     url.searchParams.set('qty', val);
     buy.href = url.toString();
   }
+
+  // ✅ อัปเดตค่า qty ที่จะส่งใน form
+  const cartQty = document.getElementById('qty_cart');
+  if (cartQty) cartQty.value = val;
+
+  // ✅ ตรวจ stock เพื่อ disable ปุ่ม
   const stock = parseInt(document.getElementById('qty').dataset.stock || '0', 10);
-  setButtonsDisabled(val > stock || stock <= 0);
+  const addBtn = document.getElementById('btnAddToCart');
+  const warn = document.getElementById('qtyWarn');
+  const disabled = val > stock || stock <= 0;
+  addBtn.disabled = disabled;
+  warn.classList.toggle('hidden', !disabled);
 }
 
 function chg(d) {
@@ -162,61 +168,27 @@ function chg(d) {
   const cur = parseInt(el.value || '1', 10) || 1;
   const next = clampQty(cur + d);
   el.value = next;
-  currentQty = next; // ✅ บันทึกจำนวนล่าสุด
   syncQty(next);
 }
 
-// ✅ เมื่อพิมพ์ในช่องจำนวน
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('qty');
   el.addEventListener('input', () => {
     const val = clampQty(parseInt(el.value || '1', 10) || 1);
     el.value = val;
-    currentQty = val; // ✅ เก็บค่าปัจจุบัน
     syncQty(val);
   });
   syncQty(parseInt(el.value || '1', 10));
+
+  const box = document.getElementById('detailBox');
+  const arrow = document.getElementById('arrow');
+  const btn = document.getElementById('toggleDetail');
+  btn.addEventListener('click', () => {
+    box.classList.toggle('hidden');
+    arrow.style.transform = box.classList.contains('hidden') ? 'rotate(-90deg)' : 'rotate(0deg)';
+  });
 });
-
-// ✅ ฟังก์ชัน Add to Cart
-async function addToCart(productId) {
-  const qty = parseInt(currentQty) || 1; // ✅ ดึงค่าจำนวนล่าสุดจากตัวแปร global
-
-  try {
-    const res = await fetch("/cart/add", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-TOKEN": "{{ csrf_token() }}"
-      },
-      body: JSON.stringify({
-        product_id: productId,
-        qty: qty
-      })
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      alert(`เพิ่มสินค้า ${qty} ชิ้นในตะกร้าแล้ว!`);
-      // ✅ update cart count badge
-      const badge = document.querySelector("#cart-count");
-      if (badge && data.cart_count !== undefined) {
-        badge.textContent = data.cart_count;
-      }
-    } else if (res.status === 401) {
-      window.location.href = "/login";
-    } else {
-      alert("ไม่สามารถเพิ่มสินค้าในตะกร้าได้");
-    }
-  } catch (err) {
-    console.error(err);
-    alert("เกิดข้อผิดพลาดจาก server");
-  }
-}
 </script>
-
-
 
 {{-- ✅ Hide number input arrows --}}
 <style>
@@ -229,5 +201,4 @@ async function addToCart(productId) {
     -moz-appearance: textfield;
   }
 </style>
-
 @endsection

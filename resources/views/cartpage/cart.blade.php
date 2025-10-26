@@ -65,17 +65,19 @@
                     <span>Total</span>
                     <span id="total">฿ 0.0 THB</span>
                 </div>
-                {{--  ปุ่ม Check Out: ส่งเฉพาะรายการที่เลือกพร้อมจำนวน --}}
-                <form id="checkoutForm" action="{{ route('cart.checkout') }}" method="POST" class="mt-2">
-                @csrf
-                <input type="hidden" name="items" id="itemsField">
-                <button type="submit"
-                    class="w-full bg-gradient-to-r from-[#7B4B3A] to-[#C79A8B] text-white
-                        font-semibold py-3 rounded-full shadow-md hover:opacity-90 active:translate-y-[1px] transition">
-                    Check Out
-                </button>
-                </form>
 
+                {{-- ✅ ปุ่ม Check Out: ส่งเฉพาะสินค้าที่ "ติ๊กเลือก" --}}
+                <form id="checkoutForm" action="{{ route('cart.checkout') }}" method="POST" class="mt-2">
+                    @csrf
+                    {{-- Container สำหรับ hidden input ที่จะสร้างผ่าน JS --}}
+                    <div id="selectedItemsContainer"></div>
+
+                    <button type="submit"
+                        class="w-full bg-gradient-to-r from-[#7B4B3A] to-[#C79A8B] text-white
+                            font-semibold py-3 rounded-full shadow-md hover:opacity-90 active:translate-y-[1px] transition">
+                        Check Out
+                    </button>
+                </form>
             </div>
         </div>
         @endif
@@ -181,6 +183,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     },
                     body: JSON.stringify({ product_id: productId })
                 });
+
                 item.remove();
                 updateCartCount();
                 calcSubtotal();
@@ -241,6 +244,22 @@ document.addEventListener("DOMContentLoaded", () => {
     selectAll.addEventListener("change", () => {
         document.querySelectorAll(".item-check").forEach(chk => chk.checked = selectAll.checked);
         calcSubtotal();
+        
+        // ✅ รีเซ็ตสถานะทุกครั้งที่กลับมาหน้า cart (เช่นกดปุ่ม back)
+        window.addEventListener("pageshow", function (event) {
+            // ตรวจว่าหน้านี้มาจาก cache หรือไม่ (เช่น navigate back)
+            if (event.persisted || performance.getEntriesByType("navigation")[0].type === "back_forward") {
+                document.querySelectorAll(".item-check").forEach(chk => chk.checked = false);
+                if (document.getElementById("select-all")) document.getElementById("select-all").checked = false;
+                // reset subtotal/total
+                const subtotalEl = document.getElementById("subtotal");
+                const totalEl = document.getElementById("total");
+                if (subtotalEl) subtotalEl.textContent = "฿ 0.0";
+                if (totalEl) totalEl.textContent = "฿ 0.0 THB";
+            }
+        });
+
+
     });
 
     /** 🧷 checkbox เดี่ยว */
