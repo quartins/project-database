@@ -148,8 +148,6 @@ if (searchInput) {
         }, 300);
     });
 }
-
-
     // 🛍 Cart System
     const cartCountEl = document.getElementById("cart-count");
     if (cartCountEl) {
@@ -165,35 +163,49 @@ if (searchInput) {
 
     // ✅ Add to Cart + Toast แสดงผล
     window.addToCart = async function (productId) {
-        try {
-            const res = await fetch("/cart/add", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.content || "{{ csrf_token() }}"
-                },
-                body: JSON.stringify({ product_id: productId })
-            });
+    try {
+        const res = await fetch("/cart/add", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "application/json",              // ✅ เพิ่ม
+                "X-Requested-With": "XMLHttpRequest",       // ✅ เพิ่ม
+                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.content || "{{ csrf_token() }}"
+            },
+            body: JSON.stringify({ product_id: productId })
+        });
 
-            if (res.status === 401) {
-                window.location.href = "{{ route('login') }}";
-                return;
-            }
-
-            const data = await res.json();
-            if (data.cart_count !== undefined && cartCountEl) {
-                cartCountEl.textContent = data.cart_count;
-                cartCountEl.classList.remove("hidden");
-                cartCountEl.classList.add("scale-125");
-                setTimeout(() => cartCountEl.classList.remove("scale-125"), 200);
-
-                // ✅ แสดง Toast น่ารัก ๆ แล้วหายไปเอง
-                showToast("Added to cart!");
-            }
-        } catch (err) {
-            console.error("Add to cart failed:", err);
+        if (res.status === 401) {
+            window.location.href = "{{ route('login') }}";
+            return;
         }
-    };
+
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+            const text = await res.text();
+            console.warn("⚠️ Response is not JSON:", text.slice(0, 200));
+            if (text.includes("login")) {
+                alert("กรุณาล็อกอินก่อนเพิ่มสินค้า");
+                window.location.href = "{{ route('login') }}";
+            }
+            return;
+        }
+
+        const data = await res.json();
+        if (data.cart_count !== undefined && cartCountEl) {
+            cartCountEl.textContent = data.cart_count;
+            cartCountEl.classList.remove("hidden");
+            cartCountEl.classList.add("scale-125");
+            setTimeout(() => cartCountEl.classList.remove("scale-125"), 200);
+
+            // ✅ แสดง Toast น่ารัก ๆ แล้วหายไปเอง
+            showToast("Added to cart!");
+        }
+    } catch (err) {
+        console.error("Add to cart failed:", err);
+    }
+};
+
 });
 </script>
 @endpush

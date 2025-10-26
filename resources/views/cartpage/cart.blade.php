@@ -40,9 +40,10 @@
                             </div>
                         </div>
                         <div class="flex items-center gap-3">
-                            <button class="plus-btn border border-[#7B4B3A] rounded-full w-6 h-6 flex justify-center items-center text-[#7B4B3A] hover:bg-[#7B4B3A] hover:text-white transition">+</button>
-                            <span class="quantity text-gray-800 font-medium">{{ $item->quantity }}</span>
                             <button class="minus-btn border border-[#7B4B3A] rounded-full w-6 h-6 flex justify-center items-center text-[#7B4B3A] hover:bg-[#7B4B3A] hover:text-white transition">−</button>
+                            <span class="quantity text-gray-800 font-medium">{{ $item->quantity }}</span>
+                            <button class="plus-btn border border-[#7B4B3A] rounded-full w-6 h-6 flex justify-center items-center text-[#7B4B3A] hover:bg-[#7B4B3A] hover:text-white transition">+</button>
+
                             <button type="button"
                                     class="remove-btn text-gray-400 hover:text-pink-600 text-xl ml-4"
                                     data-id="{{ $item->product->id }}">
@@ -202,34 +203,48 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (e.target.classList.contains("remove-btn")) {
-            e.preventDefault();
-            const res = await fetch("/cart/remove", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
-                },
-                body: JSON.stringify({ product_id: productId })
-            });
+    e.preventDefault();
+    const res = await fetch("/cart/remove", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: JSON.stringify({ product_id: productId })
+    });
 
-            if (!res.ok) return;
+    if (!res.ok) return;
 
-            item.classList.add("opacity-0", "translate-x-4", "transition-all", "duration-300");
-            setTimeout(() => {
-                item.remove();
-                const remaining = document.querySelectorAll(".cart-item").length;
-                if (remaining === 0) {
-                    cartContainer.innerHTML = `
-                        <div class="text-center text-gray-500 italic py-10 bg-pink-50 rounded-lg shadow">
-                            Your cart is empty
-                        </div>`;
+        const data = await res.json();
+
+        item.classList.add("opacity-0", "translate-x-4", "transition-all", "duration-300");
+        setTimeout(() => {
+            item.remove();
+            const remaining = document.querySelectorAll(".cart-item").length;
+            if (remaining === 0) {
+                cartContainer.innerHTML = `
+                    <div class="text-center text-gray-500 italic py-10 bg-pink-50 rounded-lg shadow">
+                        Your cart is empty
+                    </div>`;
+            }
+
+            // ✅ อัปเดตเลขหัว My Cart และไอคอนตะกร้าแบบทันที
+            if (typeof data.cart_count !== "undefined") {
+                if (cartCountEl) {
+                    cartCountEl.textContent = data.cart_count;
+                    cartCountEl.classList.toggle("hidden", data.cart_count <= 0);
                 }
-            }, 300);
+                myCartTitle.textContent = `My Cart (${data.cart_count})`;
+            } else {
+                updateCartCount();
+            }
 
-            updateCartCount();
             calcSubtotal();
-            return;
-        }
+        }, 300);
+
+        return;
+    }
+
 
         const res = await fetch("/cart/update", {
             method: "POST",
