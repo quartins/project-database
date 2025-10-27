@@ -11,15 +11,13 @@ use Illuminate\Support\Facades\DB;
 
 class CheckoutController extends Controller
 {
-    /* -------------------------------------------------------------------------- */
-    /* 🛒 1. สร้าง Order จากการซื้อสินค้าทันที                                  */
-    /* -------------------------------------------------------------------------- */
+
     public function createFromProduct(Product $product, Request $request)
     {
         $qty = max(1, (int) $request->get('qty', 1));
         $max = (int) $product->stock_qty;
 
-        // ❗ ถ้าเกินสต็อก ให้เตือนและเด้งกลับหน้าสินค้า
+          // If requested quantity exceeds stock
         if ($qty > $max) {
             $back = $request->get(
                 'return',
@@ -29,11 +27,11 @@ class CheckoutController extends Controller
             );
 
             return redirect()->to($back)
-                ->with('flash_err', "ขออภัย จำนวนที่ต้องการ ($qty) มากกว่าสินค้าที่เหลือในสต็อก ($max) ชิ้น")
+                ->with('flash_err', "Sorry, the requested quantity ($qty) exceeds available stock ($max) units.")
                 ->with('suggested_qty', $max);
         }
 
-        // ✅ สร้างคำสั่งซื้อ
+        // Create new order
         $order = Order::create([
             'user_id'      => auth()->id(),
             'status'       => 'draft',
@@ -56,53 +54,45 @@ class CheckoutController extends Controller
         return redirect()->route('checkout.summary', $order);
     }
 
-    /* -------------------------------------------------------------------------- */
-    /* 🧾 2. แสดงหน้า Order Summary                                             */
-    /* -------------------------------------------------------------------------- */
+    
     public function summary(Order $order)
-{
-    // ✅ โหลดสัมพันธ์ที่ต้องใช้ทั้งหมด
-    $order->load(['items.product', 'shippingAddress']);
+    {
+        $order->load(['items.product', 'shippingAddress']);
 
-    // 🔹 ตรวจสอบจำนวนสต็อกก่อนแสดง
-    foreach ($order->items as $it) {
-        if ($it->qty > $it->product->stock_qty) {
-            $back = route('products.show', [
-                'key' => $it->product->id . '-' . \Illuminate\Support\Str::slug($it->product->name)
-            ]);
-            return redirect()->to($back)
-                ->with('flash_err', "ตอนนี้สินค้า {$it->product->name} เหลือ {$it->product->stock_qty} ชิ้น")
-                ->with('suggested_qty', $it->product->stock_qty);
+        // Verify stock before showing summary
+        foreach ($order->items as $it) {
+            if ($it->qty > $it->product->stock_qty) {
+                $back = route('products.show', [
+                    'key' => $it->product->id . '-' . \Illuminate\Support\Str::slug($it->product->name)
+                ]);
+                return redirect()->to($back)
+                    ->with('flash_err', "The product {$it->product->name} now has only {$it->product->stock_qty}  items left.")
+                    ->with('suggested_qty', $it->product->stock_qty);
+            }
         }
+
+        // Default address
+        $defaultAddress = null;
+        if (auth()->check()) {
+            $defaultAddress = auth()->user()
+                ->addresses()
+                ->where('is_default', true)
+                ->first();
+        }
+
+        $returnUrl =
+            session("order_return_{$order->id}") ?:
+            url()->previous() ?:
+            ($order->items->first()
+                ? route('products.show', [
+                    'key' => $order->items->first()->product->id . '-' .
+                            \Illuminate\Support\Str::slug($order->items->first()->product->name)
+                ])
+                : url('/'));
+
+        return view('checkout.summary', compact('order', 'returnUrl', 'defaultAddress'));
     }
 
-    // 🔹 ดึงที่อยู่เริ่มต้นของผู้ใช้ (default address)
-    $defaultAddress = null;
-    if (auth()->check()) {
-        $defaultAddress = auth()->user()
-            ->addresses()
-            ->where('is_default', true)
-            ->first();
-    }
-
-    // 🔹 หาหน้ากลับ (return URL)
-    $returnUrl =
-        session("order_return_{$order->id}") ?:
-        url()->previous() ?:
-        ($order->items->first()
-            ? route('products.show', [
-                'key' => $order->items->first()->product->id . '-' .
-                         \Illuminate\Support\Str::slug($order->items->first()->product->name)
-              ])
-            : url('/'));
-
-    // ✅ ส่งตัวแปรไปยัง view ให้ครบ
-    return view('checkout.summary', compact('order', 'returnUrl', 'defaultAddress'));
-}
-
-    /* -------------------------------------------------------------------------- */
-    /* 🏠 3. อัปเดตข้อมูลที่อยู่ / คูปอง / ค่าขนส่ง                             */
-    /* -------------------------------------------------------------------------- */
     public function update(Order $order, Request $req)
     {
         $data = $req->validate([
@@ -148,7 +138,7 @@ class CheckoutController extends Controller
             $order->discount = 0;
 
             $msgKey = 'coupon_info';
-            $msgVal = 'นำคูปองออกแล้ว';
+            $msgVal = 'Coupon removed.';
 
             /* -------------------------------------------------------------------------- */
             /*  1. โค้ด chamora — ลดทุกสินค้า 15%                                      */
@@ -156,12 +146,9 @@ class CheckoutController extends Controller
             if ($code === 'chamora') {
                 $order->discount = round($order->subtotal * 0.15, 2);
                 $msgKey = 'coupon_ok';
-                $msgVal = 'ใช้โค้ด CHAMORA สำเร็จ — ลด 15% ของค่าสินค้าทั้งหมด ';
+                $msgVal = 'Coupon CHAMORA applied — 15% discount on all items.';
             }
 
-            /* -------------------------------------------------------------------------- */
-            /*  2. โค้ดเฉพาะคอลเลกชัน (Kuromi / Hirono / Friendship)               */
-            /* -------------------------------------------------------------------------- */
             elseif (in_array($code, ['kurolove', 'prince10', 'friendship10'])) {
 
                 $eligibleTotal = 0;
@@ -202,30 +189,26 @@ class CheckoutController extends Controller
                     $order->discount = round($eligibleTotal * 0.10, 2);
                     $msgKey = 'coupon_ok';
                     $msgVal = match ($code) {
-                        'kurolove'     => 'ใช้โค้ด KUROLOVE สำเร็จ — ลด 10% สำหรับสินค้า Kuromi ',
-                        'prince10'     => 'ใช้โค้ด PRINCE10 สำเร็จ — ลด 10% สำหรับสินค้า Hirono ',
-                        'friendship10' => 'ใช้โค้ด FRIENDSHIP10 สำเร็จ — ลด 10% สำหรับ Kuromi และ Hirono ',
+                        'kurolove'     => 'Coupon KUROLOVE applied — 10% off Kuromi collection.',
+                        'prince10'     => 'Coupon PRINCE10 applied — 10% off Hirono collection.',
+                        'friendship10' => 'Coupon FRIENDSHIP10 applied — 10% off Kuromi and Hirono collections.',
                     };
                 } else {
                     //  ไม่มีสินค้าที่เข้าเงื่อนไข
                     $msgKey = 'coupon_err';
                     $msgVal = match ($code) {
-                        'kurolove'     => 'คูปองนี้ใช้ได้เฉพาะสินค้า Kuromi เท่านั้น ',
-                        'prince10'     => 'คูปองนี้ใช้ได้เฉพาะสินค้า Hirono เท่านั้น ',
-                        'friendship10' => 'คูปองนี้ใช้ได้เมื่อมีสินค้าทั้ง Kuromi และ Hirono ในคำสั่งซื้อ ',
+                        'kurolove'     => 'This coupon is valid only for Kuromi collection.',
+                        'prince10'     => 'This coupon is valid only for Hirono collection.',
+                        'friendship10' => 'This coupon requires both Kuromi and Hirono items in the order.',
                     };
                 }
             }
 
-            /* -------------------------------------------------------------------------- */
-            /*  3. ถ้าไม่เจอโค้ดในระบบ                                                */
-            /* -------------------------------------------------------------------------- */
             elseif (!empty($code)) {
                 $msgKey = 'coupon_err';
-                $msgVal = 'ไม่พบคูปองนี้ในระบบ ';
+                $msgVal = 'Coupon code not found.';
             }
 
-            //  คำนวณราคาใหม่และบันทึก
             $order->recalc();
             $order->save();
 
@@ -251,7 +234,7 @@ class CheckoutController extends Controller
                 foreach ($order->items as $item) {
                     $item->product->decrement('stock_qty', $item->qty);
                 }
-                // ✅ เมื่อลูกค้าชำระเงินแล้ว ค่อยลบสินค้าที่อยู่ในตะกร้า
+                // เมื่อลูกค้าชำระเงินแล้ว ค่อยลบสินค้าที่อยู่ในตะกร้า
                 $cart = \App\Models\Cart::where('user_id', $order->user_id)->first();
                 if ($cart) {
                     foreach ($order->items as $item) {
@@ -288,16 +271,15 @@ class CheckoutController extends Controller
                     ->with('flash_err', 'Invalid order status.');
             }
 
-            // ✅ อัปเดตเป็นชำระเงินแล้ว
             $order->status  = 'paid';
             $order->paid_at = now();
             $order->save();
             $order->recalc();
 
-            // ✅ เคลียร์ session เดิม
+            // เคลียร์ session เดิม
             session()->forget("order_return_{$order->id}");
 
-            // ✅ ไปหน้า Thank You
+            // ไปหน้า Thank You
             return redirect()->route('checkout.thankyou')
                 ->with('flash_ok', 'Payment successful! Your order has been confirmed.');
         }
@@ -309,12 +291,12 @@ class CheckoutController extends Controller
 
     public function updateAddress(Request $request, Order $order)
     {
-        // ✅ ตรวจสอบสิทธิ์ว่า order เป็นของ user คนนี้
+        // ตรวจสอบสิทธิ์ว่า order เป็นของ user คนนี้
         if ($order->user_id !== auth()->id()) {
             abort(403, 'Unauthorized access to this order');
         }
 
-        // ✅ ตรวจสอบ address ที่ส่งมา
+        // ตรวจสอบ address ที่ส่งมา
         $data = $request->validate([
             'address_id' => 'required|exists:addresses,id',
         ]);
@@ -323,7 +305,7 @@ class CheckoutController extends Controller
             ->where('id', $data['address_id'])
             ->firstOrFail();
 
-        // ✅ อัปเดตเฉพาะ order นี้ (ไม่แตะ default)
+        // อัปเดตเฉพาะ order นี้ (ไม่แตะ default)
         $order->shipping_address_id = $address->id;
         $order->save();
 
@@ -336,24 +318,24 @@ class CheckoutController extends Controller
 
     public function cancel(Order $order)
     {
-        // ✅ ตรวจสอบสิทธิ์ผู้ใช้
+        // ตรวจสอบสิทธิ์ผู้ใช้
         if ($order->user_id !== auth()->id()) {
             abort(403, 'Unauthorized access');
         }
 
-        // ✅ ยกเลิกได้เฉพาะ order ที่ยัง pending
+        // ยกเลิกได้เฉพาะ order ที่ยัง pending
         if ($order->status !== 'pending') {
             return back()->with('flash_err', 'This order cannot be cancelled.');
         }
 
-        // ✅ คืน stock ให้สินค้า
+        // คืน stock ให้สินค้า
         foreach ($order->items as $item) {
             if ($item->product) {
                 $item->product->increment('stock_qty', $item->qty);
             }
         }
 
-        // ✅ เปลี่ยนสถานะเป็น cancelled (ไม่ต้องมี column เพิ่ม)
+        // เปลี่ยนสถานะเป็น cancelled (ไม่ต้องมี column เพิ่ม)
         $order->update(['status' => 'cancelled']);
 
         return redirect()->route('orders.index', ['status' => 'pending'])
