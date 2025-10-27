@@ -11,24 +11,24 @@ use App\Http\Controllers\ProfileAddressController;
 use Illuminate\Support\Facades\Route;
 
 /* -------------------------------------------------------------------------- */
-/* 🌸 Public Routes (เข้าถึงได้ทุกคน)                                         */
+/* Public Routes (เข้าถึงได้ทุกคน)                                         */
 /* -------------------------------------------------------------------------- */
 
-// 🏠 หน้าแรก
+//  หน้าแรก
 Route::get('/', [ProductController::class, 'index'])->name('home');
 
-// 📄 Static Pages
+//  Static Pages
 Route::view('/about', 'about')->name('about');
 Route::view('/contact', 'contact')->name('contact');
 
-// 🔍 Search
+//  Search
 Route::get('/search', [ProductController::class, 'search'])->name('search');
 
-// 🧸 Collections
+//  Collections
 Route::get('/collections', [CollectionController::class, 'index'])->name('collection.index');
 Route::get('/collections/{category}', [CollectionController::class, 'show'])->name('collection.show');
 
-// 🛍 Product Details
+// Product Details
 Route::get('/products/{idSlug}', [ProductController::class, 'show'])
     ->where('idSlug', '[0-9]+(?:-[A-Za-z0-9\-]+)?')
     ->name('products.show');
@@ -50,25 +50,25 @@ Route::middleware(['auth'])->group(function () {
 
 Route::middleware(['auth'])->group(function () {
 
-    /* ------------------------------ 🛒 CART ------------------------------ */
+    /* ------------------------------  CART ------------------------------ */
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/update', [CartController::class, 'update'])->name('cart.update');
     Route::post('/cart/remove', [CartController::class, 'remove'])->name('cart.remove');
     Route::get('/cart/count', [CartController::class, 'count'])->name('cart.count');
     Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
 
-    /* ----------------------------- 👤 PROFILE ----------------------------- */
+    /* -----------------------------  PROFILE ----------------------------- */
     Route::get('/myprofile', fn() => redirect()->route('profile.edit'))->name('profile.custom');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    /* ------------------------- 🧾 ORDERS & ADDRESS ------------------------ */
+    /* -------------------------  ORDERS & ADDRESS ------------------------ */
     Route::get('/orders', [ProfileOrderController::class, 'index'])->name('orders.index');
     Route::get('/profile/address', [ProfileAddressController::class, 'showPage'])
     ->name('profile.address.page');
 
-    // 📦 Address Management (Chamora style)
+    //  Address Management (Chamora style)
    Route::get('/profile/address/list', [ProfileAddressController::class, 'index'])->name('profile.address.list');
     Route::post('/profile/address', [ProfileAddressController::class, 'store'])->name('profile.address.store');
     Route::put('/profile/address/{address}', [ProfileAddressController::class, 'update'])->name('profile.address.update');

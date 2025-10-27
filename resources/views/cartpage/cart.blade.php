@@ -71,10 +71,10 @@
                     <span id="total">฿ 0.0 THB</span>
                 </div>
 
-                {{-- ✅ ปุ่ม Check Out: ส่งเฉพาะสินค้าที่ "ติ๊กเลือก" --}}
+                {{--  ปุ่ม Check Out: ส่งเฉพาะสินค้าที่ "ติ๊กเลือก" --}}
                 <form id="checkoutForm" action="{{ route('cart.checkout') }}" method="POST" class="mt-2">
                     @csrf
-                    {{-- ✅ Hidden input ที่ใช้ส่ง JSON --}}
+                    {{--  Hidden input ที่ใช้ส่ง JSON --}}
                     <input type="hidden" name="items" id="itemsField">
 
                     <button type="submit"
@@ -105,7 +105,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const checkoutForm = document.getElementById("checkoutForm");
     const itemsField = document.getElementById("itemsField");
 
-    /** 🧮 คำนวณ Subtotal */
+    /**  คำนวณ Subtotal */
     function calcSubtotal() {
         let subtotal = 0;
         document.querySelectorAll(".cart-item").forEach(item => {
@@ -118,14 +118,14 @@ document.addEventListener("DOMContentLoaded", () => {
         totalEl.textContent = `฿ ${subtotal.toFixed(1)} THB`;
     }
 
-    /** 🔁 อัปเดตสถานะ select all */
+    /**  อัปเดตสถานะ select all */
     function updateSelectAllStatus() {
         const allChecks = document.querySelectorAll(".item-check");
         const checked = document.querySelectorAll(".item-check:checked");
         selectAll.checked = allChecks.length > 0 && checked.length === allChecks.length;
     }
 
-    /** 🧺 อัปเดตจำนวนสินค้าทั้งหมดในหัวตะกร้า */
+    /**  อัปเดตจำนวนสินค้าทั้งหมดในหัวตะกร้า */
     function updateCartCount() {
         let totalQty = 0;
         document.querySelectorAll(".cart-item").forEach(item => {
@@ -147,7 +147,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    /** ✅ ตรวจสอบ stock ก่อน checkout */
+    /**  ตรวจสอบ stock ก่อน checkout */
     if (checkoutForm) {
         checkoutForm.addEventListener("submit", async (e) => {
             e.preventDefault();
@@ -193,7 +193,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    /** 🧩 จัดการคลิกภายใน cart (เพิ่ม/ลด/ลบสินค้า) */
+    /**  จัดการคลิกภายใน cart (เพิ่ม/ลด/ลบสินค้า) */
     cartContainer.addEventListener("click", async (e) => {
         const item = e.target.closest(".cart-item");
         if (!item) return;
@@ -201,7 +201,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const productId = item.dataset.id;
         let qty = parseInt(item.querySelector(".quantity").textContent);
 
-        // ✅ ตรวจ stock ก่อนเพิ่ม
+        //  ตรวจ stock ก่อนเพิ่ม
         if (e.target.classList.contains("plus-btn")) {
             const resStock = await fetch(`/cart/get-stock/${productId}`);
             const data = await resStock.json();
@@ -248,7 +248,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // ✅ update quantity
+        //  update quantity
         const res = await fetch("/cart/update", {
             method: "POST",
             headers: {

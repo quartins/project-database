@@ -2,7 +2,7 @@
 <header class="shadow-md" style="background: radial-gradient(circle at center, #ffffff, #fed8ee, #ffd1eb)">
     <div class="max-w-7xl mx-auto grid grid-cols-3 items-center px-6 py-4">
         
-        {{-- 🔍 Search Box --}}
+        {{--  Search Box --}}
         <div class="relative w-48">
             <input id="search-box" type="text" 
                 placeholder="Search..." 
@@ -14,14 +14,14 @@
                  class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 opacity-80">
         </div>
 
-        {{-- 🌸 Logo --}}
+        {{--  Logo --}}
         <div class="flex justify-center">
             <a href="/">
                 <img src="{{ asset('images/logo.png') }}" alt="Chamora Logo" class="h-14">
             </a>
         </div>
 
-        {{-- 🛒 Cart + User --}}
+        {{-- Cart + User --}}
         <div class="flex justify-end items-center space-x-4">
             @auth
                 <a href="{{ route('cart.index') }}" class="relative hover:opacity-80 transition">
@@ -99,7 +99,7 @@ function showToast(message = "Added to cart!", type = "success") {
 
 
 document.addEventListener("DOMContentLoaded", () => {
-    // 🔍 Search system
+    //  Search system
     const searchInput = document.getElementById("search-box");
     if (searchInput) {
         const bannerSection = document.getElementById("banner-section");
@@ -166,7 +166,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // 🛍 Cart Count
+    //  Cart Count
     const cartCountEl = document.getElementById("cart-count");
     if (cartCountEl) {
         fetch("/cart/count")
@@ -179,7 +179,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .catch(() => cartCountEl.classList.add("hidden"));
     }
 
-    // ✅ Add to Cart
+    //  Add to Cart
     window.addToCart = async function (productId) {
         try {
             // 🔹 ตรวจสอบจำนวนในตะกร้าก่อน
@@ -189,7 +189,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             if (checkRes.status === 401) {
-            window.location.href = "{{ route('login') }}"; // ⬅️ เด้ง login ทันที
+            window.location.href = "{{ route('login') }}"; 
             return;
             }
 
@@ -206,7 +206,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             if (stockRes.status === 401) {
-            window.location.href = "{{ route('login') }}"; // ⬅️ เด้ง login ทันที
+            window.location.href = "{{ route('login') }}"; 
             return;
             }
 
@@ -218,7 +218,7 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
             }
 
-            // 🔹 ถ้ายังไม่เต็ม → เพิ่มเข้า cart ได้อีก 1 ชิ้น
+            //  ถ้ายังไม่เต็ม → เพิ่มเข้า cart ได้อีก 1 ชิ้น
             const res = await fetch("/cart/add", {
             method: "POST",
             credentials: "include",
@@ -234,7 +234,7 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             if (res.status === 401) {
-            window.location.href = "{{ route('login') }}"; // ⬅️ เด้ง login ทันที
+            window.location.href = "{{ route('login') }}"; 
             return;
             }
 
@@ -250,7 +250,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         } catch (err) {
             console.error("Add to cart failed:", err);
-            window.location.href = "{{ route('login') }}"; // ⬅️ เด้ง login ทันทีถ้ามี error ใด ๆ
+            window.location.href = "{{ route('login') }}"; //  เด้ง login ทันทีถ้ามี error ใด ๆ
         }
     };
 

@@ -7,7 +7,7 @@
   <section class="bg-white rounded-2xl border border-gray-200 p-6">
     <h1 class="text-2xl font-bold mb-6">Purchase Order</h1>
 
-    {{-- 🔹 Tabs แยกสถานะ --}}
+    {{--  Tabs แยกสถานะ --}}
     <div class="flex gap-6 mb-6 border-b pb-2 text-sm font-medium">
         <a href="{{ route('orders.index', ['status' => 'cancelled']) }}"
          class="{{ ($status ?? '') === 'cancelled' ? 'text-rose-600 border-b-2 border-rose-600' : 'text-gray-500 hover:text-gray-800' }}">

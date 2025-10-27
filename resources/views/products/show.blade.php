@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-{{-- 🌸 Breadcrumb Navigation --}}
+{{--  Breadcrumb Navigation --}}
 <div class="max-w-6xl mx-auto px-6 mt-6 text-gray-600 text-sm font-medium">
     <nav class="flex flex-wrap items-center gap-1">
         <a href="{{ route('collection.index') }}" class="hover:text-[#6B3E2E] transition-colors">Collection</a>
@@ -21,7 +21,7 @@
 
 <div class="max-w-6xl mx-auto py-10 px-6 grid md:grid-cols-2 gap-12 items-start">
 
-  {{-- ✅ Product Image --}}
+  {{--  Product Image --}}
   <div class="bg-white rounded-2xl shadow-lg p-6 flex justify-center items-center">
     <img
       src="{{ asset($product->image_url) }}"
@@ -29,14 +29,14 @@
       class="mx-auto max-h-[480px] object-contain rounded-xl transition-transform duration-300 hover:scale-105">
   </div>
 
-  {{-- ✅ Product Information --}}
+  {{--  Product Information --}}
   <div>
     <h1 class="text-3xl font-crimson font-bold text-gray-900 leading-snug">{{ $product->name }}</h1>
     <div class="text-[#C72533] font-semibold text-2xl mt-2">
         ฿ {{ number_format($product->price, 2) }}
     </div>
 
-    {{-- ✅ Stock Info --}}
+    {{--  Stock Info --}}
     <div class="mt-2">
       @if($product->inStock())
         <p class="text-green-600 text-sm font-medium">In stock</p>
@@ -46,7 +46,7 @@
       @endif
     </div>
 
-    {{-- ✅ Quantity Selector --}}
+    {{--  Quantity Selector --}}
     <div class="mt-6">
       <label class="text-sm font-semibold text-gray-800">Quantity</label>
       <div class="flex items-center mt-2 gap-2">
@@ -64,10 +64,10 @@
       </div>
     </div>
 
-    {{-- ✅ Buttons --}}
+    {{--  Buttons --}}
     <div class="flex gap-4 mt-8">
       @if(!$product->inStock())
-        {{-- ❌ Out of stock → Disable both buttons --}}
+        {{--  Out of stock → Disable both buttons --}}
         <button disabled
           class="px-8 py-3 rounded text-gray-400 font-semibold bg-gray-200 border border-gray-300 cursor-not-allowed flex items-center justify-center gap-2">
           BUY NOW
@@ -78,7 +78,7 @@
           Add To Cart
         </button>
       @else
-        {{-- ✅ BUY NOW --}}
+        {{--  BUY NOW --}}
         <a id="buyNowLink"
           href="{{ route('checkout.buy', $product) }}?qty={{ session('suggested_qty', $qty ?? 1) }}&return={{ urlencode($return ?? url()->current()) }}"
           class="px-8 py-3 rounded text-white font-semibold shadow-sm transition-all duration-300
@@ -87,7 +87,7 @@
           BUY NOW
         </a>
 
-        {{-- ✅ Add to Cart --}}
+        {{--  Add to Cart --}}
         <button type="button"
                 id="btnAddToCart"
                 onclick="addProductToCart({{ $product->id }})"
@@ -99,12 +99,12 @@
       @endif
     </div>
 
-    {{-- ✅ Warning for invalid qty --}}
+    {{--  Warning for invalid qty --}}
     <p id="qtyWarn" class="hidden text-sm text-rose-600 mt-3">
-      ❗ The selected quantity exceeds available stock
+       The selected quantity exceeds available stock
     </p>
 
-    {{-- ✅ Product Detail --}}
+    {{--  Product Detail --}}
     <div class="mt-10 border-t pt-5">
       <button id="toggleDetail" type="button"
               class="w-full text-left flex justify-between items-center font-semibold text-gray-800">
@@ -142,7 +142,7 @@
   </div>
 </div>
 
-{{-- ✅ Script --}}
+{{--  Script --}}
 <script>
 function clampQty(q) {
   const stock = parseInt(document.getElementById('qty').dataset.stock || '0', 10);
@@ -194,7 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-// ✅ ฟังก์ชันเพิ่มสินค้า (ตัวเดียวเท่านั้น)
+//  ฟังก์ชันเพิ่มสินค้า (ตัวเดียวเท่านั้น)
 async function addProductToCart(productId) {
   const qty = parseInt(document.getElementById('qty').value || '1', 10);
   const stock = parseInt(document.getElementById('qty').dataset.stock || '0', 10);
@@ -259,7 +259,7 @@ async function addProductToCart(productId) {
         setTimeout(() => cartCount.classList.remove("scale-125"), 200);
       }
 
-      // ✅ ใช้ toast จาก header (หายแน่หลัง 2 วิ)
+      //  ใช้ toast จาก header (หายแน่หลัง 2 วิ)
       setTimeout(() => showToast?.("Item added to cart successfully!", "success"), 100);
 
     } else {

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 
 class ProfileAddressController extends Controller
 {
-    /** ✅ Get all addresses as JSON (used in modal) */
+    /** Get all addresses as JSON (used in modal) */
     public function index()
     {
         $addresses = Address::where('user_id', Auth::id())->get();
@@ -21,14 +21,14 @@ class ProfileAddressController extends Controller
         return response()->json($addresses);
     }
 
-    /** ✅ Display the Address Book page */
+    /**  Display the Address Book page */
     public function showPage()
     {
         $addresses = Address::where('user_id', auth()->id())->get();
         return view('profile.address', compact('addresses'));
     }
 
-    /** ✅ Display the address edit page (for full-page view) */
+    /**  Display the address edit page (for full-page view) */
     public function edit()
     {
         $user = Auth::user();
@@ -37,7 +37,7 @@ class ProfileAddressController extends Controller
         return view('profile.address', compact('addresses'));
     }
 
-    /** ✅ Add a new address (used by both modal & profile page) */
+    /**  Add a new address (used by both modal & profile page) */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -65,7 +65,7 @@ class ProfileAddressController extends Controller
 
         $address = Address::create($validated);
 
-        // 🧠 ตรวจว่า request มาจาก fetch (expect JSON) หรือไม่
+        //  ตรวจว่า request มาจาก fetch (expect JSON) หรือไม่
         if ($request->expectsJson() || $request->isJson() || $request->ajax()) {
             return response()->json([
                 'success' => true,
@@ -74,7 +74,7 @@ class ProfileAddressController extends Controller
             ]);
         }
 
-        // 🧩 fallback: ถ้ามาจากหน้า profile ปกติ (form submit)
+        //  fallback: ถ้ามาจากหน้า profile ปกติ (form submit)
         return redirect()
             ->route('profile.address.page')
             ->with('success', 'The address has been added successfully.');

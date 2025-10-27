@@ -56,10 +56,10 @@ class CartController extends Controller
         $product = Product::findOrFail($request->product_id);
         $cart = Cart::firstOrCreate(['user_id' => $user->id]);
 
-        // ✅ ดึงจำนวนจาก request (qty หรือ quantity)
+        //  ดึงจำนวนจาก request (qty หรือ quantity)
         $qty = max(1, (int) ($request->input('qty') ?? $request->input('quantity', 1)));
 
-        // ✅ ตรวจว่ามี item เดิมไหม
+        //  ตรวจว่ามี item เดิมไหม
         $item = CartItem::where('cart_id', $cart->id)
                         ->where('product_id', $product->id)
                         ->first();
@@ -75,10 +75,10 @@ class CartController extends Controller
             ]);
         }
 
-        // ✅ คำนวณจำนวนรวมใหม่
+        //  คำนวณจำนวนรวมใหม่
         $count = CartItem::where('cart_id', $cart->id)->sum('quantity');
 
-        // ✅ ถ้าเป็น AJAX (fetch) → ส่ง JSON
+        //  ถ้าเป็น AJAX (fetch) → ส่ง JSON
         if ($request->ajax()) {
             return response()->json([
                 'ok' => true,
@@ -87,13 +87,13 @@ class CartController extends Controller
             ]);
         }
 
-        // ✅ ถ้าเป็น form POST → redirect ไปหน้าตะกร้า
+        //  ถ้าเป็น form POST → redirect ไปหน้าตะกร้า
         return redirect()
             ->route('cart.index')
             ->with('success', "เพิ่มสินค้า {$qty} ชิ้นในตะกร้าแล้ว!");
     }
 
-    // ✅ ลบสินค้า
+    //  ลบสินค้า
     public function remove(Request $request)
     {
         if (!Auth::check()) {
@@ -116,7 +116,7 @@ class CartController extends Controller
         ]);
     }
 
-    // ✅ อัปเดตจำนวนสินค้า
+    //  อัปเดตจำนวนสินค้า
     public function update(Request $request)
     {
         if (!Auth::check()) {
@@ -147,7 +147,7 @@ class CartController extends Controller
         ]);
     }
 
-    // ✅ ดึงจำนวนสินค้า (ใช้ตอนโหลดหน้า Home)
+    //  ดึงจำนวนสินค้า (ใช้ตอนโหลดหน้า Home)
     public function count()
     {
         if (!Auth::check()) {
@@ -173,7 +173,7 @@ class CartController extends Controller
             return redirect('/cart')->with('error', 'ตะกร้าของคุณว่างเปล่า');
         }
 
-        // ✅ รับเฉพาะรายการที่ "ติ๊กเลือก" มาจากฟอร์ม
+        //  รับเฉพาะรายการที่ "ติ๊กเลือก" มาจากฟอร์ม
         $payload = json_decode($request->input('items', '[]'), true);
         if (empty($payload) || !is_array($payload)) {
             return redirect('/cart')->with('error', 'กรุณาเลือกสินค้าอย่างน้อย 1 รายการ');
@@ -186,7 +186,7 @@ class CartController extends Controller
             return [$pid => $q];
         });
 
-        // ✅ ดึงรายการในตะกร้าตามที่เลือกเท่านั้น
+        //  ดึงรายการในตะกร้าตามที่เลือกเท่านั้น
         $items = $cart->cartItems()
                     ->whereIn('product_id', $selectedIds)
                     ->with('product')
@@ -196,7 +196,7 @@ class CartController extends Controller
             return redirect('/cart')->with('error', 'ไม่พบสินค้าที่เลือก');
         }
 
-        // ✅ คำนวณยอดรวมตามจำนวนที่เลือกจริง
+        //  คำนวณยอดรวมตามจำนวนที่เลือกจริง
         $subtotal = 0;
         foreach ($items as $ci) {
             $qty = $qtyMap[$ci->product_id] ?? $ci->quantity ?? 1;
@@ -205,7 +205,7 @@ class CartController extends Controller
 
         $shipping = 35.00;
 
-        // ✅ สร้างออเดอร์
+        //  สร้างออเดอร์
         $order = Order::create([
             'user_id'      => $user->id,
             'subtotal'     => $subtotal,
@@ -218,7 +218,7 @@ class CartController extends Controller
             $qty = $qtyMap[$ci->product_id] ?? $ci->quantity ?? 1;
             $order->items()->create([
                 'product_id' => $ci->product_id,
-                'qty'        => $qty, // ✅ ใช้ 'qty' ให้ตรง DB
+                'qty'        => $qty,
                 'unit_price' => $ci->product->price,
             ]);
         }
@@ -229,7 +229,7 @@ class CartController extends Controller
             $order->recalc();
         }
 
-        // ✅ ลบเฉพาะรายการที่ "เลือกแล้ว" ออกจากตะกร้า (ไม่ลบทั้งตะกร้า)
+        //  ลบเฉพาะรายการที่ "เลือกแล้ว" ออกจากตะกร้า (ไม่ลบทั้งตะกร้า)
         //$cart->cartItems()->whereIn('product_id', $selectedIds)->delete();
 
         return redirect()->route('checkout.summary', ['order' => $order]);

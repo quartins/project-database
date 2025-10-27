@@ -20,7 +20,7 @@
 
         <div>
             <p class="text-lg text-gray-600">
-                <strong class="text-xl">🌸 About Chamora</strong><br><br>
+                <strong class="text-xl"> About Chamora</strong><br><br>
                 Chamora was born from a deep passion for collecting adorable character figures from the world of imagination ✨<br><br>
                 We are devoted to creating a cozy little space for everyone who loves cuteness in every detail — from collectible figures and decorative items to officially licensed merchandise inspired by beloved characters such as Hello Kitty, My Melody, Cinnamoroll, and many more from the Sanrio universe 💕<br><br>
                 At Chamora, we believe that every collectible is more than just decoration — it is a memory, a moment of joy, and a spark of happiness that brightens everyday life.<br><br>
