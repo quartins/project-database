@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\Product;
+use App\Models\Promotion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -132,37 +133,57 @@ class CheckoutController extends Controller
     }
 
 
-    public function applyCoupon(Order $order, Request $req)
-    {
-        // เก็บค่าที่อยู่ชั่วคราวถ้ามีส่งมาด้วย
-        $addressKeys = [
-            'recipient_name','phone','address_line1','address_line2',
-            'district','province','postcode','country','shipping_fee'
-        ];
-        $draft = $req->only($addressKeys);
-        if (!empty(array_filter($draft))) {
-            $order->fill($draft);
-        }
+     public function applyCoupon(Order $order, Request $req)
+        {
+            $addressKeys = [
+                'recipient_name','phone','address_line1','address_line2',
+                'district','province','postcode','country','shipping_fee'
+            ];
+            $draft = $req->only($addressKeys);
+            if (!empty(array_filter($draft))) {
+                $order->fill($draft);
+            }
 
-        // ประมวลผลคูปอง
-        $code = strtolower(trim($req->input('coupon_code', '')));
-        $order->coupon_code = $code ?: null;
-        $order->discount = 0;
+            $code = strtolower(trim($req->input('coupon_code', '')));
+            $order->coupon_code = $code ?: null;
+            $order->discount = 0;
 
-        if ($code === 'chamora') {
-            $order->discount = round($order->subtotal * 0.15, 2);
-            $msgKey = 'coupon_ok';
-            $msgVal = 'ใช้คูปองสำเร็จ — ลด 15% ของค่าสินค้า';
-        } else {
             $msgKey = 'coupon_info';
             $msgVal = 'นำคูปองออกแล้ว';
+
+            if ($code === 'chamora') {
+                // ✅ ลดทุกสินค้า 15%
+                $order->discount = round($order->subtotal * 0.15, 2);
+                $msgKey = 'coupon_ok';
+                $msgVal = 'ใช้โค้ด chamora สำเร็จ — ลด 15% ของค่าสินค้าทั้งหมด';
+            } 
+            elseif ($code === 'collection10') {
+                // ✅ ลดเฉพาะหมวดหมู่ 3 (Kuromi) และ 4 (Hirono)
+                $eligibleIds = [3, 4];
+                $eligibleTotal = 0;
+
+                foreach ($order->items as $item) {
+                    if (in_array($item->product->category_id, $eligibleIds)) {
+                        $eligibleTotal += $item->unit_price * $item->qty;
+                    }
+                }
+
+                if ($eligibleTotal > 0) {
+                    $order->discount = round($eligibleTotal * 0.10, 2);
+                    $msgKey = 'coupon_ok';
+                    $msgVal = 'ใช้โค้ด collection10 สำเร็จ — ลด 10% สำหรับสินค้า Kuromi และ Hirono';
+                } else {
+                    // ❌ ไม่มีสินค้าที่ใช้ได้
+                    $msgKey = 'coupon_err';
+                    $msgVal = 'คูปองนี้ใช้ได้เฉพาะกับสินค้า Kuromi และ Hirono เท่านั้น';
+                }
+            }
+
+            $order->recalc();
+            $order->save();
+
+            return back()->with($msgKey, $msgVal)->withInput();
         }
-
-        $order->recalc();
-        $order->save();
-
-        return back()->with($msgKey, $msgVal)->withInput();
-    }
 
 
     public function payment(Order $order)
