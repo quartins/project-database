@@ -100,7 +100,6 @@ class CheckoutController extends Controller
     return view('checkout.summary', compact('order', 'returnUrl', 'defaultAddress'));
 }
 
-
     /* -------------------------------------------------------------------------- */
     /* 🏠 3. อัปเดตข้อมูลที่อยู่ / คูปอง / ค่าขนส่ง                             */
     /* -------------------------------------------------------------------------- */
@@ -248,19 +247,23 @@ class CheckoutController extends Controller
                         abort(409, "สินค้า {$p->name} คงเหลือไม่พอ");
                     }
                 }
-
                 //  หัก stock จริง
                 foreach ($order->items as $item) {
                     $item->product->decrement('stock_qty', $item->qty);
                 }
+                // ✅ เมื่อลูกค้าชำระเงินแล้ว ค่อยลบสินค้าที่อยู่ในตะกร้า
+                $cart = \App\Models\Cart::where('user_id', $order->user_id)->first();
+                if ($cart) {
+                    foreach ($order->items as $item) {
+                        $cart->cartItems()->where('product_id', $item->product_id)->delete();
+                    }
+                }
 
-                //  เปลี่ยนสถานะเป็น pending_payment (รอจ่าย)
                 $order->status = 'pending';
                 $order->save();
             });
         }
 
-        //  โหลดข้อมูลสินค้ามาแสดง
         $order->load('items.product');
 
         $returnUrl = session("order_return_{$order->id}")
@@ -274,7 +277,6 @@ class CheckoutController extends Controller
         return view('checkout.payment', compact('order', 'returnUrl'));
     }
 
-    
      public function confirm(Request $request, Order $order)
         {
             if ($order->status === 'paid') {
@@ -292,14 +294,6 @@ class CheckoutController extends Controller
             $order->save();
             $order->recalc();
 
-            // ✅ เมื่อลูกค้าชำระเงินแล้ว ค่อยลบสินค้าที่อยู่ในตะกร้า
-            $cart = \App\Models\Cart::where('user_id', $order->user_id)->first();
-            if ($cart) {
-                foreach ($order->items as $item) {
-                    $cart->cartItems()->where('product_id', $item->product_id)->delete();
-                }
-            }
-
             // ✅ เคลียร์ session เดิม
             session()->forget("order_return_{$order->id}");
 
@@ -307,12 +301,7 @@ class CheckoutController extends Controller
             return redirect()->route('checkout.thankyou')
                 ->with('flash_ok', 'Payment successful! Your order has been confirmed.');
         }
-
-
-
-    /* -------------------------------------------------------------------------- */
-    /* 🎉 7. หน้า Thank You                                                      */
-    /* -------------------------------------------------------------------------- */
+ 
     public function thankyou()
     {
         return view('checkout.thankyou');
