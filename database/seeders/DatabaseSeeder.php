@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             CategorySeeder::class,
             ProductSeeder::class,
             ProductDetailsSeeder::class,
+            PromotionSeeder::class,
         ]);
 
         //  เพิ่ม user สำหรับทดสอบ login
