@@ -18,9 +18,9 @@ class ViewServiceProvider extends ServiceProvider
 
     public function boot(): void
     {
-        // ✅ ตรวจสอบว่าส่งไปที่ 'layouts.navigation'
+        //  ตรวจสอบว่าส่งไปที่ 'layouts.navigation'
         View::composer('layouts.navigation', function ($view) {
-             // ✅ ตรวจสอบว่าส่งด้วยชื่อ 'navCategories'
+             //  ตรวจสอบว่าส่งด้วยชื่อ 'navCategories'
             $view->with('navCategories', Category::all());
         });
     }

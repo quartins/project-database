@@ -10,14 +10,14 @@
 <div class="bg-white min-h-screen">
     <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
 
-        {{-- 🩷 ชื่อหมวดหมู่ --}}
+        {{--  ชื่อหมวดหมู่ --}}
         <h1 id="section-title" class="text-4xl font-bold text-center mb-10">{{ $category->name }}</h1>
 
-        {{-- 🔍 กล่องผลลัพธ์การค้นหา (จะโชว์เฉพาะตอนค้นหา) --}}
+        {{--  กล่องผลลัพธ์การค้นหา (จะโชว์เฉพาะตอนค้นหา) --}}
         <div id="search-results"
              class="hidden grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 sm:gap-8"></div>
 
-        {{-- 🧸 สินค้าในหมวด --}}
+        {{--  สินค้าในหมวด --}}
         <div id="product-grid"
              class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 sm:gap-8">
             @foreach ($products as $product)

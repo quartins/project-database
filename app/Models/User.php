@@ -59,19 +59,19 @@ class User extends Authenticatable
         ];
     }
 
-    /** ✅ Accessor: ใช้ username เป็น name */
+    /**  Accessor: ใช้ username เป็น name */
     public function getNameAttribute(): string
     {
         return $this->username ?? '';
     }
 
-    /** ✅ Mutator: บันทึก username ผ่าน name */
+    /**  Mutator: บันทึก username ผ่าน name */
     public function setNameAttribute($value): void
     {
         $this->attributes['username'] = $value;
     }
 
-    /** ✅ ความสัมพันธ์กับที่อยู่ผู้ใช้ (user_addresses table) */
+    /** ความสัมพันธ์กับที่อยู่ผู้ใช้ (user_addresses table) */
     public function addresses()
     {
         return $this->hasMany(\App\Models\Address::class);

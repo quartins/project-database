@@ -3,7 +3,7 @@
 @section('content')
 <div class="max-w-5xl mx-auto px-6 py-12">
 
-  {{-- 🔙 Back button (history) --}}
+  {{--  Back button (history) --}}
   <button onclick="history.back()" 
           class="flex items-center text-[#5a362e] hover:text-[#8B5E45] mb-6 transition">
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" 
@@ -13,11 +13,11 @@
     <span class="text-sm font-medium">Back</span>
   </button>
 
-  {{-- 🏦 Title --}}
+  {{--  Title --}}
   <h2 class="text-3xl font-bold text-center text-[#3b2c28] mb-2">Payment</h2>
   <div class="w-24 h-[2px] bg-[#8B5E45] mx-auto mb-10"></div>
 
-  {{-- 💳 QR Section --}}
+  {{--  QR Section --}}
   <div class="flex flex-col items-center gap-6">
     <div class="bg-white border border-gray-200 p-6 rounded-2xl shadow-sm hover:shadow-md transition">
       <img src="{{ asset('images/qr.png') }}" 
@@ -28,13 +28,13 @@
       </div>
     </div>
 
-    {{-- 📄 Instruction --}}
+    {{--  Instruction --}}
     <p class="text-center text-sm text-gray-600 leading-relaxed">
       Please complete your payment within <span class="font-medium text-[#8B5E45]">10 minutes</span><br>
       and press <strong>“Confirm Payment”</strong> after you’ve made your payment.
     </p>
 
-    {{-- ✅ Confirm button --}}
+    {{--  Confirm button --}}
     <form method="POST" action="{{ route('checkout.confirm', $order) }}">
       @csrf
       <button type="submit"

@@ -16,7 +16,7 @@ return new class extends Migration
                 $table->string('code')->unique(); // เช่น chamora
                 $table->string('name'); // ชื่อโปร
                 $table->decimal('discount_percent', 5, 2); // เช่น 15.00
-                $table->enum('applies_to', ['all', 'collection'])->default('all');
+                $table->enum('applies_to', ['all', 'collection', 'combo'])->default('all');
                 $table->boolean('is_active')->default(true);
                 $table->date('start_date')->nullable();
                 $table->date('end_date')->nullable();

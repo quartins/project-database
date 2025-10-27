@@ -2,7 +2,7 @@
 <header class="shadow-md" style="background: radial-gradient(circle at center, #ffffff, #fed8ee, #ffd1eb)">
   <div class="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
 
-    {{-- 🌸 Logo --}}
+    {{--  Logo --}}
     <a href="/">
       <img src="{{ asset('images/logo.png') }}" alt="Chamora Logo" class="h-14">
     </a>
@@ -31,7 +31,7 @@
   </div>
 </header>
 
-{{-- 💫 Toast Popup --}}
+{{--  Toast Popup --}}
 <div id="toast"
      class="fixed inset-0 flex items-center justify-center opacity-0 pointer-events-none 
             transition-opacity duration-500 z-50">
@@ -43,10 +43,10 @@
 @push('scripts')
 <script>
 function showToast(message = "Added to cart!", type = "success") {
-    // 🔹 ลบ toast เดิมก่อน (กันซ้อน)
+    //  ลบ toast เดิมก่อน (กันซ้อน)
     document.querySelectorAll(".toast-dynamic").forEach(el => el.remove());
 
-    // 🔹 Container กลางจอ
+    //  Container กลางจอ
     let toastContainer = document.getElementById("toast-container-global");
     if (!toastContainer) {
         toastContainer = document.createElement("div");
@@ -59,7 +59,7 @@ function showToast(message = "Added to cart!", type = "success") {
         document.body.appendChild(toastContainer);
     }
 
-    // 🔹 สร้าง toast
+    //  สร้าง toast
     const toast = document.createElement("div");
     toast.className = `
         toast-dynamic px-6 py-3 text-white text-sm font-medium rounded-full shadow-lg
@@ -67,7 +67,7 @@ function showToast(message = "Added to cart!", type = "success") {
     `;
     toast.textContent = message;
 
-    // 🔹 สีพื้นหลังโทนพาสเทล
+    //  สีพื้นหลังโทนพาสเทล
     let bg = "#81C784"; // success – เขียวมิ้นต์อ่อน
     if (type === "error") bg = "#E57373";   // แดงพาสเทล
     else if (type === "warning") bg = "#FFB74D"; // ส้มพีชอ่อน
@@ -76,13 +76,13 @@ function showToast(message = "Added to cart!", type = "success") {
     // เพิ่มเข้า container
     toastContainer.appendChild(toast);
 
-    // 🔹 Fade in
+    //  Fade in
     requestAnimationFrame(() => {
         toast.style.opacity = "1";
         toast.style.transform = "scale(1)";
     });
 
-    // 🔹 Fade out แล้วลบทิ้งแน่หลัง 2 วิ
+    //  Fade out แล้วลบทิ้งแน่หลัง 2 วิ
     setTimeout(() => {
         toast.style.opacity = "0";
         toast.style.transform = "scale(0.9)";
@@ -106,7 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
             .catch(() => cartCountEl.classList.add("hidden"));
     }
 
-    // ✅ Add to Cart + Toast
+    //  Add to Cart + Toast
     window.addToCart = async function (productId) {
         try {
             const res = await fetch("/cart/add", {
@@ -130,10 +130,10 @@ document.addEventListener("DOMContentLoaded", () => {
                 cartCountEl.classList.add("scale-125");
                 setTimeout(() => cartCountEl.classList.remove("scale-125"), 200);
 
-                // ✅ แจ้งเตือนสำเร็จ
+                //  แจ้งเตือนสำเร็จ
                 showToast("Item added to cart successfully!", "success");
             } else {
-                // ⚠️ ถ้าเพิ่มไม่ได้
+                //  ถ้าเพิ่มไม่ได้
                 showToast("Unable to add item.", "error");
             }
         } catch (err) {
@@ -143,6 +143,4 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 });
 </script>
-
-
 @endpush

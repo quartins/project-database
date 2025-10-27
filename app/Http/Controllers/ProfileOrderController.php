@@ -9,23 +9,23 @@ class ProfileOrderController extends Controller
 {
     public function index(Request $request)
     {
-        // ✅ รับพารามิเตอร์ status จาก URL เช่น /orders?status=paid
+        // รับพารามิเตอร์ status จาก URL เช่น /orders?status=paid
         $status = $request->get('status', 'pending'); // default คือ pending
 
-        // ✅ Query ออเดอร์เฉพาะของ user ที่ล็อกอิน
+        //  Query ออเดอร์เฉพาะของ user ที่ล็อกอิน
         $query = Order::where('user_id', auth()->id())
             ->with(['items.product'])
             ->latest();
 
-        // ✅ กรองตามสถานะ (รองรับ cancelled ด้วย)
+        //  กรองตามสถานะ (รองรับ cancelled ด้วย)
         if (in_array($status, ['pending', 'paid', 'cancelled'])) {
             $query->where('status', $status);
         }
 
-        // ✅ ดึงข้อมูล (แบ่งหน้า)
+        //  ดึงข้อมูล (แบ่งหน้า)
         $orders = $query->paginate(10);
 
-        // ✅ ส่งไป view
+        //  ส่งไป view
         return view('profile.orders', compact('orders', 'status'));
     }
 }

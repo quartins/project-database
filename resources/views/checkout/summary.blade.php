@@ -6,7 +6,7 @@
   {{-- LEFT CONTENT --}}
   <div class="lg:col-span-2 space-y-6">
 
-    {{-- 🧾 TITLE --}}
+    {{--  TITLE --}}
     <div class="flex items-center gap-2 mt-6">
       <button onclick="history.back()" 
               class="flex items-center text-[#4B3B34] hover:text-[#8B5E45] transition">
@@ -20,7 +20,7 @@
       <h2 class="text-3xl font-bold text-[#3A2A23]">Order Summary</h2>
     </div>
 
-    {{-- 📦 Address --}}
+    {{-- Address --}}
     <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm address-box">
 
       <div class="flex justify-between items-center mb-2">
@@ -62,7 +62,7 @@
       @endif
     </div>
 
-    {{-- 🚚 Delivery --}}
+    {{--  Delivery --}}
     <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
       <h3 class="font-semibold mb-2 text-gray-800">Delivery :</h3>
       <div class="border border-gray-300 rounded-lg p-3 flex justify-between items-center bg-gray-50">
@@ -71,7 +71,7 @@
       </div>
     </div>
 
-    {{-- 🎟 Coupon --}}
+    {{--  Coupon --}}
     <div class="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
       <h3 class="font-semibold mb-2 text-gray-800">COUPON :</h3>
 
@@ -109,7 +109,7 @@
       </div>
     </div>
 
-    {{-- 🧸 Order List --}}
+    {{--  Order List --}}
     <div class="mt-4 text-sm">
       <div class="font-semibold mb-2 text-gray-700">Your Order {{ $order->items->count() }} item</div>
       @foreach($order->items as $it)
@@ -133,7 +133,7 @@
       </button>
     </form>
 
-    {{-- 🔔 แจ้งเตือนถ้ายังไม่มี address --}}
+    {{--  แจ้งเตือนถ้ายังไม่มี address --}}
     <script>
     document.addEventListener('DOMContentLoaded', () => {
       const checkoutForm = document.getElementById('checkoutForm');
@@ -169,7 +169,7 @@
 
   </aside>
 
-  {{-- ✅ Modal --}}
+  {{--  Modal --}}
   <div x-show="openAddress" 
        x-transition 
        @click.self="closeModal" 
@@ -312,5 +312,4 @@ document.addEventListener('alpine:init', () => {
   }))
 })
 </script>
-
 @endsection

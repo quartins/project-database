@@ -23,7 +23,7 @@ class Product extends Model
         'category_id'
     ];
 
-    // ✅ แก้ตรงนี้ — ลบ cast decimal ของ size_cm ออก
+    // แก้ตรงนี้ — ลบ cast decimal ของ size_cm ออก
     protected $casts = [
         'price' => 'decimal:2',
         'stock_qty' => 'integer',

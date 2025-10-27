@@ -13,7 +13,7 @@
       </button>
     </div>
 
-      {{-- ✅ Success message --}}
+      {{--  Success message --}}
       @if(session('ok'))
         <div id="flash-message" class="mb-4 text-green-700 bg-green-50 border border-green-200 px-4 py-2 rounded">
           {{ session('ok') }}
@@ -26,7 +26,7 @@
         </div>
       @endif
 
-      {{-- 🧠 Flash message auto-hide --}}
+      {{--  Flash message auto-hide --}}
       <script>
         // Automatically fade out flash messages after 3 seconds
         document.addEventListener('DOMContentLoaded', () => {
@@ -41,7 +41,7 @@
         });
       </script>
 
-    {{-- 🧩 Add new address form --}}
+    {{--  Add new address form --}}
     <form id="add-form" method="POST" action="{{ route('profile.address.store') }}"
           class="hidden border-t pt-4 grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 bg-pink-50 p-4 rounded-xl shadow-sm">
       @csrf
@@ -146,7 +146,7 @@
   </section>
 </div>
 
-{{-- 🪄 Modal สำหรับแก้ไขที่อยู่ --}}
+{{--  Modal สำหรับแก้ไขที่อยู่ --}}
 <div id="editModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
   <div class="bg-white rounded-2xl shadow-xl p-6 w-full max-w-lg">
     <h2 class="text-xl font-semibold mb-4">Edit Address</h2>
@@ -205,7 +205,7 @@
   </div>
 </div>
 
-{{-- 🧠 JavaScript สำหรับเปิด/ปิด modal --}}
+{{--  JavaScript สำหรับเปิด/ปิด modal --}}
 <script>
   function openEditModal(addr) {
     document.getElementById('editModal').classList.remove('hidden');

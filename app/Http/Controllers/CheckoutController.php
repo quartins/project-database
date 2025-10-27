@@ -12,14 +12,14 @@ use Illuminate\Support\Facades\DB;
 class CheckoutController extends Controller
 {
     /* -------------------------------------------------------------------------- */
-    /* 🛒 1. สร้าง Order จากการซื้อสินค้าทันที                                  */
+    /*  1. สร้าง Order จากการซื้อสินค้าทันที                                  */
     /* -------------------------------------------------------------------------- */
     public function createFromProduct(Product $product, Request $request)
     {
         $qty = max(1, (int) $request->get('qty', 1));
         $max = (int) $product->stock_qty;
 
-        // ❗ ถ้าเกินสต็อก ให้เตือนและเด้งกลับหน้าสินค้า
+        //  ถ้าเกินสต็อก ให้เตือนและเด้งกลับหน้าสินค้า
         if ($qty > $max) {
             $back = $request->get(
                 'return',
@@ -33,7 +33,7 @@ class CheckoutController extends Controller
                 ->with('suggested_qty', $max);
         }
 
-        // ✅ สร้างคำสั่งซื้อ
+        //  สร้างคำสั่งซื้อ
         $order = Order::create([
             'user_id'      => auth()->id(),
             'status'       => 'draft',
@@ -57,52 +57,52 @@ class CheckoutController extends Controller
     }
 
     /* -------------------------------------------------------------------------- */
-    /* 🧾 2. แสดงหน้า Order Summary                                             */
+    /*  2. แสดงหน้า Order Summary                                             */
     /* -------------------------------------------------------------------------- */
     public function summary(Order $order)
-{
-    // ✅ โหลดสัมพันธ์ที่ต้องใช้ทั้งหมด
-    $order->load(['items.product', 'shippingAddress']);
+        {
 
-    // 🔹 ตรวจสอบจำนวนสต็อกก่อนแสดง
-    foreach ($order->items as $it) {
-        if ($it->qty > $it->product->stock_qty) {
-            $back = route('products.show', [
-                'key' => $it->product->id . '-' . \Illuminate\Support\Str::slug($it->product->name)
-            ]);
-            return redirect()->to($back)
-                ->with('flash_err', "ตอนนี้สินค้า {$it->product->name} เหลือ {$it->product->stock_qty} ชิ้น")
-                ->with('suggested_qty', $it->product->stock_qty);
+            $order->load(['items.product', 'shippingAddress']);
+
+            //  ตรวจสอบจำนวนสต็อกก่อนแสดง
+            foreach ($order->items as $it) {
+                if ($it->qty > $it->product->stock_qty) {
+                    $back = route('products.show', [
+                        'key' => $it->product->id . '-' . \Illuminate\Support\Str::slug($it->product->name)
+                    ]);
+                    return redirect()->to($back)
+                        ->with('flash_err', "ตอนนี้สินค้า {$it->product->name} เหลือ {$it->product->stock_qty} ชิ้น")
+                        ->with('suggested_qty', $it->product->stock_qty);
+                }
+            }
+
+            //  ดึงที่อยู่เริ่มต้นของผู้ใช้ (default address)
+            $defaultAddress = null;
+            if (auth()->check()) {
+                $defaultAddress = auth()->user()
+                    ->addresses()
+                    ->where('is_default', true)
+                    ->first();
+            }
+
+            //  หาหน้ากลับ (return URL)
+            $returnUrl =
+                session("order_return_{$order->id}") ?:
+                url()->previous() ?:
+                ($order->items->first()
+                    ? route('products.show', [
+                        'key' => $order->items->first()->product->id . '-' .
+                                \Illuminate\Support\Str::slug($order->items->first()->product->name)
+                    ])
+                    : url('/'));
+
+            //  ส่งตัวแปรไปยัง view ให้ครบ
+            return view('checkout.summary', compact('order', 'returnUrl', 'defaultAddress'));
         }
-    }
-
-    // 🔹 ดึงที่อยู่เริ่มต้นของผู้ใช้ (default address)
-    $defaultAddress = null;
-    if (auth()->check()) {
-        $defaultAddress = auth()->user()
-            ->addresses()
-            ->where('is_default', true)
-            ->first();
-    }
-
-    // 🔹 หาหน้ากลับ (return URL)
-    $returnUrl =
-        session("order_return_{$order->id}") ?:
-        url()->previous() ?:
-        ($order->items->first()
-            ? route('products.show', [
-                'key' => $order->items->first()->product->id . '-' .
-                         \Illuminate\Support\Str::slug($order->items->first()->product->name)
-              ])
-            : url('/'));
-
-    // ✅ ส่งตัวแปรไปยัง view ให้ครบ
-    return view('checkout.summary', compact('order', 'returnUrl', 'defaultAddress'));
-}
 
 
     /* -------------------------------------------------------------------------- */
-    /* 🏠 3. อัปเดตข้อมูลที่อยู่ / คูปอง / ค่าขนส่ง                             */
+    /*  3. อัปเดตข้อมูลที่อยู่ / คูปอง / ค่าขนส่ง                             */
     /* -------------------------------------------------------------------------- */
     public function update(Order $order, Request $req)
     {
@@ -286,13 +286,13 @@ class CheckoutController extends Controller
                     ->with('flash_err', 'Invalid order status.');
             }
 
-            // ✅ อัปเดตเป็นชำระเงินแล้ว
+            //  อัปเดตเป็นชำระเงินแล้ว
             $order->status  = 'paid';
             $order->paid_at = now();
             $order->save();
             $order->recalc();
 
-            // ✅ เมื่อลูกค้าชำระเงินแล้ว ค่อยลบสินค้าที่อยู่ในตะกร้า
+            //  เมื่อลูกค้าชำระเงินแล้ว ค่อยลบสินค้าที่อยู่ในตะกร้า
             $cart = \App\Models\Cart::where('user_id', $order->user_id)->first();
             if ($cart) {
                 foreach ($order->items as $item) {
@@ -300,10 +300,10 @@ class CheckoutController extends Controller
                 }
             }
 
-            // ✅ เคลียร์ session เดิม
+            //  เคลียร์ session เดิม
             session()->forget("order_return_{$order->id}");
 
-            // ✅ ไปหน้า Thank You
+            //  ไปหน้า Thank You
             return redirect()->route('checkout.thankyou')
                 ->with('flash_ok', 'Payment successful! Your order has been confirmed.');
         }
@@ -311,7 +311,7 @@ class CheckoutController extends Controller
 
 
     /* -------------------------------------------------------------------------- */
-    /* 🎉 7. หน้า Thank You                                                      */
+    /*  7. หน้า Thank You                                                      */
     /* -------------------------------------------------------------------------- */
     public function thankyou()
     {
@@ -320,12 +320,12 @@ class CheckoutController extends Controller
 
     public function updateAddress(Request $request, Order $order)
     {
-        // ✅ ตรวจสอบสิทธิ์ว่า order เป็นของ user คนนี้
+        //  ตรวจสอบสิทธิ์ว่า order เป็นของ user คนนี้
         if ($order->user_id !== auth()->id()) {
             abort(403, 'Unauthorized access to this order');
         }
 
-        // ✅ ตรวจสอบ address ที่ส่งมา
+        //  ตรวจสอบ address ที่ส่งมา
         $data = $request->validate([
             'address_id' => 'required|exists:addresses,id',
         ]);
@@ -334,7 +334,7 @@ class CheckoutController extends Controller
             ->where('id', $data['address_id'])
             ->firstOrFail();
 
-        // ✅ อัปเดตเฉพาะ order นี้ (ไม่แตะ default)
+        // อัปเดตเฉพาะ order นี้ (ไม่แตะ default)
         $order->shipping_address_id = $address->id;
         $order->save();
 
@@ -347,24 +347,24 @@ class CheckoutController extends Controller
 
     public function cancel(Order $order)
     {
-        // ✅ ตรวจสอบสิทธิ์ผู้ใช้
+        //  ตรวจสอบสิทธิ์ผู้ใช้
         if ($order->user_id !== auth()->id()) {
             abort(403, 'Unauthorized access');
         }
 
-        // ✅ ยกเลิกได้เฉพาะ order ที่ยัง pending
+        //  ยกเลิกได้เฉพาะ order ที่ยัง pending
         if ($order->status !== 'pending') {
             return back()->with('flash_err', 'This order cannot be cancelled.');
         }
 
-        // ✅ คืน stock ให้สินค้า
+        //  คืน stock ให้สินค้า
         foreach ($order->items as $item) {
             if ($item->product) {
                 $item->product->increment('stock_qty', $item->qty);
             }
         }
 
-        // ✅ เปลี่ยนสถานะเป็น cancelled (ไม่ต้องมี column เพิ่ม)
+        //  เปลี่ยนสถานะเป็น cancelled (ไม่ต้องมี column เพิ่ม)
         $order->update(['status' => 'cancelled']);
 
         return redirect()->route('orders.index', ['status' => 'pending'])

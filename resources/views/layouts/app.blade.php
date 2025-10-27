@@ -18,7 +18,7 @@
 
 <body class="font-serif min-h-screen antialiased bg-transparent overflow-x-hidden">
 
-    {{-- 🌸 Header + Navbar (เลือกตามหน้า) --}}
+    {{--  Header + Navbar (เลือกตามหน้า) --}}
     <header>
         @if (
             Request::is('about') || 
@@ -32,22 +32,22 @@
             Request::is('checkout*') || 
             Request::is('cart*')
         )
-            {{-- ✅ ใช้ header-simple ไม่มีช่อง search --}}
+            {{--  ใช้ header-simple ไม่มีช่อง search --}}
             @include('layouts.header-simple')
         @else
-            {{-- ✅ ใช้ header ปกติ (มีช่อง search) --}}
+            {{--  ใช้ header ปกติ (มีช่อง search) --}}
             @include('layouts.header')
         @endif
 
         @include('layouts.navigation')
     </header>
 
-    {{-- 🌼 Main --}}
+    {{--  Main --}}
     <main class="min-h-[80vh] px-0 pt-0 mt-0">
         @yield('content')
     </main>
 
-    {{-- 🍋 Footer → แสดงเฉพาะหน้า Home --}}
+    {{--  Footer → แสดงเฉพาะหน้า Home --}}
     @if (Request::is('/'))
         <footer class="mt-0 py-6 text-center text-gray-600 text-sm bg-yellow-50 shadow-none border-0">
             © 2025 Chamora | All Rights Reserved
