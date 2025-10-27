@@ -95,10 +95,14 @@
                 </form>
 
                 {{-- Pay Now --}}
-                <a href="{{ route('checkout.payment', $order) }}"
-                  class="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 text-center font-semibold transition shadow-sm">
-                  PAY NOW
-                </a>
+              <form action="{{ route('checkout.payment', $order) }}" method="POST" style="display:inline;">
+                  @csrf
+                  <button type="submit"
+                      class="px-4 py-2 rounded-lg bg-green-500 text-white hover:bg-green-600 text-center font-semibold transition shadow-sm">
+                      PAY NOW
+                  </button>
+              </form>
+
 
               @elseif($order->status === 'paid' && $first?->product)
                 {{-- Buy Again --}}

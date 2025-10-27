@@ -335,7 +335,6 @@ class CheckoutController extends Controller
             }
         }
 
-        // เปลี่ยนสถานะเป็น cancelled (ไม่ต้องมี column เพิ่ม)
         $order->update(['status' => 'cancelled']);
 
         return redirect()->route('orders.index', ['status' => 'pending'])
