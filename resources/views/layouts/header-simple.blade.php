@@ -42,22 +42,58 @@
 
 @push('scripts')
 <script>
-function showToast(message = "Added to cart!") {
-    const toast = document.getElementById("toast");
-    const inner = toast.querySelector("div");
-    inner.textContent = message;
+function showToast(message = "Added to cart!", type = "success") {
+    // 🔹 ลบ toast เดิมก่อน (กันซ้อน)
+    document.querySelectorAll(".toast-dynamic").forEach(el => el.remove());
 
-    toast.classList.remove("opacity-0", "pointer-events-none");
-    toast.classList.add("opacity-100");
+    // 🔹 Container กลางจอ
+    let toastContainer = document.getElementById("toast-container-global");
+    if (!toastContainer) {
+        toastContainer = document.createElement("div");
+        toastContainer.id = "toast-container-global";
+        toastContainer.style.position = "fixed";
+        toastContainer.style.top = "50%";
+        toastContainer.style.left = "50%";
+        toastContainer.style.transform = "translate(-50%, -50%)";
+        toastContainer.style.zIndex = "99999";
+        document.body.appendChild(toastContainer);
+    }
 
+    // 🔹 สร้าง toast
+    const toast = document.createElement("div");
+    toast.className = `
+        toast-dynamic px-6 py-3 text-white text-sm font-medium rounded-full shadow-lg
+        opacity-0 transition-all duration-300 ease-in-out mb-3 text-center
+    `;
+    toast.textContent = message;
+
+    // 🔹 สีพื้นหลังโทนพาสเทล
+    let bg = "#81C784"; // success – เขียวมิ้นต์อ่อน
+    if (type === "error") bg = "#E57373";   // แดงพาสเทล
+    else if (type === "warning") bg = "#FFB74D"; // ส้มพีชอ่อน
+    toast.style.backgroundColor = bg;
+
+    // เพิ่มเข้า container
+    toastContainer.appendChild(toast);
+
+    // 🔹 Fade in
+    requestAnimationFrame(() => {
+        toast.style.opacity = "1";
+        toast.style.transform = "scale(1)";
+    });
+
+    // 🔹 Fade out แล้วลบทิ้งแน่หลัง 2 วิ
     setTimeout(() => {
-        toast.classList.remove("opacity-100");
-        setTimeout(() => toast.classList.add("pointer-events-none"), 500);
-    }, 1000);
+        toast.style.opacity = "0";
+        toast.style.transform = "scale(0.9)";
+        setTimeout(() => {
+            if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 400);
+    }, 1500);
 }
 
+
 document.addEventListener("DOMContentLoaded", () => {
-    // 🛍 Update cart count
     const cartCountEl = document.getElementById("cart-count");
     if (cartCountEl) {
         fetch("/cart/count")
@@ -94,12 +130,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 cartCountEl.classList.add("scale-125");
                 setTimeout(() => cartCountEl.classList.remove("scale-125"), 200);
 
-                showToast("Added to cart!");
+                // ✅ แจ้งเตือนสำเร็จ
+                showToast("Item added to cart successfully!", "success");
+            } else {
+                // ⚠️ ถ้าเพิ่มไม่ได้
+                showToast("Unable to add item.", "error");
             }
         } catch (err) {
             console.error("Add to cart failed:", err);
+            showToast("Please login before adding to cart.", "warning");
         }
     };
 });
 </script>
+
+
 @endpush

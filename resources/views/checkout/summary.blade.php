@@ -156,7 +156,6 @@
         addressBox.appendChild(warning);
       }
 
-      // ลบกรอบแดงอัตโนมัติหลัง 3 วินาที
       setTimeout(() => {
         addressBox.classList.remove('border-rose-400', 'bg-rose-50', 'shake');
       }, 3000);

@@ -235,4 +235,53 @@ class CartController extends Controller
         return redirect()->route('checkout.summary', ['order' => $order]);
     }
 
+    public function getStock($id)
+    {
+        $product = \App\Models\Product::find($id);
+        if (!$product) {
+            return response()->json(['error' => true, 'message' => 'Product not found'], 404);
+        }
+        return response()->json(['stock_qty' => $product->stock_qty]);
+    }
+    
+    public function getItem($id)
+    {
+        if (!Auth::check()) {
+            return response()->json(['error' => true, 'message' => 'Not logged in'], 401);
+        }
+
+        $user = Auth::user();
+        $cart = Cart::where('user_id', $user->id)->first();
+        if (!$cart) {
+            return response()->json(['current_qty' => 0]);
+        }
+
+        $item = CartItem::where('cart_id', $cart->id)
+                        ->where('product_id', $id)
+                        ->first();
+
+        $qty = $item ? $item->quantity : 0;
+
+        return response()->json(['current_qty' => $qty]);
+    }
+
+
+    public function checkStock(Request $request)
+    {
+        $items = $request->input('items', []);
+        foreach ($items as $item) {
+            $product = \App\Models\Product::find($item['product_id']);
+            if (!$product) {
+                return response()->json(['error' => true, 'message' => 'Product not found'], 404);
+            }
+            if ($item['qty'] > $product->stock_qty) {
+                return response()->json([
+                    'error' => true,
+                    'message' => "Sorry, {$product->name} only has {$product->stock_qty} left in stock."
+                ], 400);
+            }
+        }
+        return response()->json(['ok' => true]);
+    }
+
 }

@@ -45,110 +45,128 @@
     </div>
 </header>
 
-{{-- 💫 Toast Popup (น่ารัก ๆ แสดงตรงกลางแล้วหายไป) --}}
-<div id="toast"
-     class="fixed inset-0 flex items-center justify-center opacity-0 pointer-events-none 
-            transition-opacity duration-500 z-50">
-    <div class="bg-green-500 text-white text-sm px-6 py-3 rounded-full shadow-lg">
-        Added to cart!
-    </div>
-</div>
-
 @push('scripts')
 <script>
-function showToast(message = "Added to cart!") {
-    const toast = document.getElementById("toast");
-    const inner = toast.querySelector("div");
-    inner.textContent = message;
+function showToast(message = "Added to cart!", type = "success") {
+    // ลบ toast เดิมทั้งหมดก่อน
+    document.querySelectorAll(".toast-dynamic").forEach(el => el.remove());
 
-    // แสดง Toast
-    toast.classList.remove("opacity-0", "pointer-events-none");
-    toast.classList.add("opacity-100");
-
-    // หายไปอัตโนมัติหลัง 1 วินาที
-    setTimeout(() => {
-        toast.classList.remove("opacity-100");
-        toast.classList.add("opacity-0");
-        setTimeout(() => {
-            toast.classList.add("pointer-events-none");
-        }, 500);
-    }, 1000);
-}
-
-document.addEventListener("DOMContentLoaded", () => {
-// 🔍 Search system (works globally, even if page doesn't have banner or grid)
-const searchInput = document.getElementById("search-box");
-
-// ตรวจสอบว่ามี search box จริงก่อนทำงาน
-if (searchInput) {
-    const bannerSection = document.getElementById("banner-section");
-    const titleEl = document.getElementById("section-title");
-    const productGrid = document.getElementById("product-grid");
-
-    // ✅ สร้าง container สำหรับผลลัพธ์ ถ้ายังไม่มี
-    let resultsContainer = document.getElementById("search-results");
-    if (!resultsContainer) {
-        resultsContainer = document.createElement("div");
-        resultsContainer.id = "search-results";
-        resultsContainer.className =
-            "max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8";
-        document.body.appendChild(resultsContainer);
+    // สร้าง container กลางจอถ้ายังไม่มี
+    let toastContainer = document.getElementById("toast-container-global");
+    if (!toastContainer) {
+        toastContainer = document.createElement("div");
+        toastContainer.id = "toast-container-global";
+        toastContainer.style.position = "fixed";
+        toastContainer.style.top = "50%";
+        toastContainer.style.left = "50%";
+        toastContainer.style.transform = "translate(-50%, -50%)";
+        toastContainer.style.zIndex = "99999";
+        document.body.appendChild(toastContainer);
     }
 
-    let timer;
-    searchInput.addEventListener("input", () => {
-        const query = searchInput.value.trim();
-        clearTimeout(timer);
+    // สร้าง toast
+    const toast = document.createElement("div");
+    toast.className = `
+        toast-dynamic px-6 py-3 text-white text-sm font-medium rounded-full shadow-lg
+        opacity-0 transition-all duration-300 ease-in-out mb-3 text-center
+    `;
+    toast.textContent = message;
 
-        timer = setTimeout(async () => {
-            if (query.length === 0) {
-                // ถ้า query ว่าง ให้ซ่อนผลลัพธ์และแสดง layout เดิม (ถ้ามี)
-                resultsContainer.classList.add("hidden");
-                productGrid?.classList.remove("hidden");
-                bannerSection?.classList.remove("hidden");
-                titleEl?.classList.remove("hidden");
-                return;
-            }
+    // สีพื้นหลัง
+    let bg = "#4CAF50";
+    if (type === "error") bg = "#F44336";
+    else if (type === "warning") bg = "#FF9800";
+    toast.style.backgroundColor = bg;
 
-            // ซ่อน element ที่มีเฉพาะบางหน้า ถ้ามี
-            bannerSection?.classList.add("hidden");
-            productGrid?.classList.add("hidden");
-            titleEl?.classList.add("hidden");
+    // เพิ่มเข้า container
+    toastContainer.appendChild(toast);
 
-            // แสดงผลลัพธ์
-            resultsContainer.classList.remove("hidden");
-            resultsContainer.innerHTML = `<p class='text-center text-gray-400 italic py-6'>Searching...</p>`;
+    // Fade in
+    requestAnimationFrame(() => {
+        toast.style.opacity = "1";
+        toast.style.transform = "scale(1)";
+    });
 
-            try {
-                const res = await fetch(`/search?q=${encodeURIComponent(query)}`);
-                const data = await res.json();
+    // Fade out แล้วลบทิ้งแน่หลัง 2 วิ
+    setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "scale(0.9)";
+        setTimeout(() => {
+            if (toast && toast.parentNode) toast.parentNode.removeChild(toast);
+        }, 400);
+    }, 2000);
+}
 
-                if (!data || data.length === 0) {
-                    resultsContainer.innerHTML = `<p class='text-center text-gray-500 italic py-6'>No products found.</p>`;
+
+document.addEventListener("DOMContentLoaded", () => {
+    // 🔍 Search system
+    const searchInput = document.getElementById("search-box");
+    if (searchInput) {
+        const bannerSection = document.getElementById("banner-section");
+        const titleEl = document.getElementById("section-title");
+        const productGrid = document.getElementById("product-grid");
+
+        let resultsContainer = document.getElementById("search-results");
+        if (!resultsContainer) {
+            resultsContainer = document.createElement("div");
+            resultsContainer.id = "search-results";
+            resultsContainer.className =
+                "max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8";
+            document.body.appendChild(resultsContainer);
+        }
+
+        let timer;
+        searchInput.addEventListener("input", () => {
+            const query = searchInput.value.trim();
+            clearTimeout(timer);
+
+            timer = setTimeout(async () => {
+                if (query.length === 0) {
+                    resultsContainer.classList.add("hidden");
+                    productGrid?.classList.remove("hidden");
+                    bannerSection?.classList.remove("hidden");
+                    titleEl?.classList.remove("hidden");
                     return;
                 }
 
-                resultsContainer.innerHTML = data.map(p => `
-                    <div class="bg-white border border-gray-300 rounded-lg shadow-sm p-5 text-center hover:shadow-xl transition duration-300">
-                        <a href="/products/${p.id}-${p.slug}" class="block">
-                            <img src="${p.image_url}" alt="${p.name}" class="w-40 h-40 mx-auto object-contain mb-4">
-                            <h3 class="text-gray-800 font-medium mb-2">${p.name}</h3>
-                            <p class="text-gray-700 font-semibold mb-4">฿ ${parseFloat(p.price || 0).toFixed(1)}</p>
-                        </a>
-                        <button onclick="addToCart(${p.id})"
-                                class="bg-pink-500 hover:bg-pink-600 text-white font-medium px-4 py-2 rounded-full">
-                            Add to Cart
-                        </button>
-                    </div>
-                `).join("");
-            } catch (err) {
-                console.error("Search failed:", err);
-                resultsContainer.innerHTML = `<p class='text-center text-gray-500 italic py-6'>Search failed. Please try again.</p>`;
-            }
-        }, 300);
-    });
-}
-    // 🛍 Cart System
+                bannerSection?.classList.add("hidden");
+                productGrid?.classList.add("hidden");
+                titleEl?.classList.add("hidden");
+
+                resultsContainer.classList.remove("hidden");
+                resultsContainer.innerHTML = `<p class='text-center text-gray-400 italic py-6'>Searching...</p>`;
+
+                try {
+                    const res = await fetch(`/search?q=${encodeURIComponent(query)}`);
+                    const data = await res.json();
+
+                    if (!data || data.length === 0) {
+                        resultsContainer.innerHTML = `<p class='text-center text-gray-500 italic py-6'>No products found.</p>`;
+                        return;
+                    }
+
+                    resultsContainer.innerHTML = data.map(p => `
+                        <div class="bg-white border border-gray-300 rounded-lg shadow-sm p-5 text-center hover:shadow-xl transition duration-300">
+                            <a href="/products/${p.id}-${p.slug}" class="block">
+                                <img src="${p.image_url}" alt="${p.name}" class="w-40 h-40 mx-auto object-contain mb-4">
+                                <h3 class="text-gray-800 font-medium mb-2">${p.name}</h3>
+                                <p class="text-gray-700 font-semibold mb-4">฿ ${parseFloat(p.price || 0).toFixed(1)}</p>
+                            </a>
+                            <button onclick="addToCart(${p.id})"
+                                    class="bg-pink-500 hover:bg-pink-600 text-white font-medium px-4 py-2 rounded-full">
+                                Add to Cart
+                            </button>
+                        </div>
+                    `).join("");
+                } catch (err) {
+                    console.error("Search failed:", err);
+                    resultsContainer.innerHTML = `<p class='text-center text-gray-500 italic py-6'>Search failed. Please try again.</p>`;
+                }
+            }, 300);
+        });
+    }
+
+    // 🛍 Cart Count
     const cartCountEl = document.getElementById("cart-count");
     if (cartCountEl) {
         fetch("/cart/count")
@@ -161,50 +179,82 @@ if (searchInput) {
             .catch(() => cartCountEl.classList.add("hidden"));
     }
 
-    // ✅ Add to Cart + Toast แสดงผล
+    // ✅ Add to Cart
     window.addToCart = async function (productId) {
-    try {
-        const res = await fetch("/cart/add", {
+        try {
+            // 🔹 ตรวจสอบจำนวนในตะกร้าก่อน
+            const checkRes = await fetch(`/cart/get-item/${productId}`, {
+            credentials: "include",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+            });
+
+            if (checkRes.status === 401) {
+            window.location.href = "{{ route('login') }}"; // ⬅️ เด้ง login ทันที
+            return;
+            }
+
+            let currentQty = 0;
+            if (checkRes.ok) {
+            const checkData = await checkRes.json();
+            currentQty = parseInt(checkData.current_qty || 0, 10);
+            }
+
+            // 🔹 ดึงข้อมูล stock ของสินค้าจาก backend
+            const stockRes = await fetch(`/cart/get-stock/${productId}`, {
+            credentials: "include",
+            headers: { "X-Requested-With": "XMLHttpRequest" }
+            });
+
+            if (stockRes.status === 401) {
+            window.location.href = "{{ route('login') }}"; // ⬅️ เด้ง login ทันที
+            return;
+            }
+
+            const stockData = await stockRes.json();
+            const stock = parseInt(stockData.stock_qty || 0, 10);
+
+            if (currentQty >= stock) {
+            showToast(`You already added all ${stock} items to your cart.`, "warning");
+            return;
+            }
+
+            // 🔹 ถ้ายังไม่เต็ม → เพิ่มเข้า cart ได้อีก 1 ชิ้น
+            const res = await fetch("/cart/add", {
             method: "POST",
+            credentials: "include",
             headers: {
                 "Content-Type": "application/json",
-                "Accept": "application/json",              // ✅ เพิ่ม
-                "X-Requested-With": "XMLHttpRequest",       // ✅ เพิ่ม
-                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]')?.content || "{{ csrf_token() }}"
+                "Accept": "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+                "X-CSRF-TOKEN":
+                document.querySelector('meta[name="csrf-token"]')?.content ||
+                "{{ csrf_token() }}"
             },
-            body: JSON.stringify({ product_id: productId })
-        });
+            body: JSON.stringify({ product_id: productId, qty: 1 })
+            });
 
-        if (res.status === 401) {
-            window.location.href = "{{ route('login') }}";
+            if (res.status === 401) {
+            window.location.href = "{{ route('login') }}"; // ⬅️ เด้ง login ทันที
             return;
-        }
-
-        const contentType = res.headers.get("content-type");
-        if (!contentType || !contentType.includes("application/json")) {
-            const text = await res.text();
-            console.warn("⚠️ Response is not JSON:", text.slice(0, 200));
-            if (text.includes("login")) {
-                alert("กรุณาล็อกอินก่อนเพิ่มสินค้า");
-                window.location.href = "{{ route('login') }}";
             }
-            return;
-        }
 
-        const data = await res.json();
-        if (data.cart_count !== undefined && cartCountEl) {
+            const data = await res.json();
+            if (data.cart_count !== undefined && cartCountEl) {
             cartCountEl.textContent = data.cart_count;
             cartCountEl.classList.remove("hidden");
             cartCountEl.classList.add("scale-125");
             setTimeout(() => cartCountEl.classList.remove("scale-125"), 200);
-
-            // ✅ แสดง Toast น่ารัก ๆ แล้วหายไปเอง
-            showToast("Added to cart!");
+            showToast("Item added to cart successfully!");
+            } else {
+            showToast("Unable to add item.", "error");
+            }
+        } catch (err) {
+            console.error("Add to cart failed:", err);
+            window.location.href = "{{ route('login') }}"; // ⬅️ เด้ง login ทันทีถ้ามี error ใด ๆ
         }
-    } catch (err) {
-        console.error("Add to cart failed:", err);
-    }
-};
+    };
+
+
 
 });
 </script>

@@ -33,12 +33,6 @@ Route::get('/products/{idSlug}', [ProductController::class, 'show'])
     ->where('idSlug', '[0-9]+(?:-[A-Za-z0-9\-]+)?')
     ->name('products.show');
 
-// 🛒 Add to Cart (ไม่ต้องล็อกอิน)
-Route::post('/cart/add', [CartController::class, 'add'])
-    ->name('cart.add')
-    ->withoutMiddleware('auth');
-
-
 Route::middleware(['auth'])->group(function () {
     Route::get('/buy/{product}', [CheckoutController::class, 'createFromProduct'])->name('checkout.buy');
     Route::get('/checkout/{order}', [CheckoutController::class, 'summary'])->name('checkout.summary');
@@ -47,6 +41,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/payment/{order}', [CheckoutController::class, 'payment'])->name('checkout.payment');
     Route::post('/payment/{order}/confirm', [CheckoutController::class, 'confirm'])->name('checkout.confirm');
     Route::get('/thank-you', [CheckoutController::class, 'thankyou'])->name('checkout.thankyou');
+    Route::post('/cart/check-stock', [CartController::class, 'checkStock']);
+    Route::get('/cart/get-stock/{id}', [CartController::class, 'getStock']);
+    Route::get('/cart/get-item/{id}', [CartController::class, 'getItem']);
+    Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+
 });
 
 Route::middleware(['auth'])->group(function () {
@@ -75,7 +74,7 @@ Route::middleware(['auth'])->group(function () {
     Route::put('/profile/address/{address}', [ProfileAddressController::class, 'update'])->name('profile.address.update');
     Route::delete('/profile/address/{address}', [ProfileAddressController::class, 'destroy'])->name('profile.address.delete');
     Route::post('/profile/address/{address}/default', [ProfileAddressController::class, 'setDefault'])->name('profile.address.default');
-
+    
     Route::post('/checkout/{order}/address', [CheckoutController::class, 'updateAddress'])
     ->name('checkout.updateAddress');
     // ยกเลิกคำสั่งซื้อ

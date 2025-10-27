@@ -4,8 +4,7 @@
 {{-- 🌸 Breadcrumb Navigation --}}
 <div class="max-w-6xl mx-auto px-6 mt-6 text-gray-600 text-sm font-medium">
     <nav class="flex flex-wrap items-center gap-1">
-        <a href="{{ route('collection.index') }}" 
-           class="hover:text-[#6B3E2E] transition-colors">Collection</a>
+        <a href="{{ route('collection.index') }}" class="hover:text-[#6B3E2E] transition-colors">Collection</a>
         <span>/</span>
 
         @if($product->category)
@@ -21,7 +20,7 @@
 </div>
 
 <div class="max-w-6xl mx-auto py-10 px-6 grid md:grid-cols-2 gap-12 items-start">
-  
+
   {{-- ✅ Product Image --}}
   <div class="bg-white rounded-2xl shadow-lg p-6 flex justify-center items-center">
     <img
@@ -32,11 +31,12 @@
 
   {{-- ✅ Product Information --}}
   <div>
-    {{-- Name + Price --}}
     <h1 class="text-3xl font-crimson font-bold text-gray-900 leading-snug">{{ $product->name }}</h1>
-    <div class="text-[#C72533] font-semibold text-2xl mt-2">฿ {{ number_format($product->price, 2) }}</div>
+    <div class="text-[#C72533] font-semibold text-2xl mt-2">
+        ฿ {{ number_format($product->price, 2) }}
+    </div>
 
-    {{-- Stock --}}
+    {{-- ✅ Stock Info --}}
     <div class="mt-2">
       @if($product->inStock())
         <p class="text-green-600 text-sm font-medium">In stock</p>
@@ -46,7 +46,7 @@
       @endif
     </div>
 
-    {{-- Quantity --}}
+    {{-- ✅ Quantity Selector --}}
     <div class="mt-6">
       <label class="text-sm font-semibold text-gray-800">Quantity</label>
       <div class="flex items-center mt-2 gap-2">
@@ -64,19 +64,30 @@
       </div>
     </div>
 
-    {{-- Buttons --}}
+    {{-- ✅ Buttons --}}
     <div class="flex gap-4 mt-8">
-      {{-- BUY NOW --}}
-      <a id="buyNowLink"
-         href="{{ route('checkout.buy', $product) }}?qty={{ session('suggested_qty', $qty ?? 1) }}&return={{ urlencode($return ?? url()->current()) }}"
-         class="px-8 py-3 rounded text-white font-semibold shadow-sm transition-all duration-300
-                bg-[#6B3E2E] hover:bg-[#8B5E45] border border-[#6B3E2E]
-                flex items-center justify-center gap-2">
-         BUY NOW
-      </a>
+      @if(!$product->inStock())
+        {{-- ❌ Out of stock → Disable both buttons --}}
+        <button disabled
+          class="px-8 py-3 rounded text-gray-400 font-semibold bg-gray-200 border border-gray-300 cursor-not-allowed flex items-center justify-center gap-2">
+          BUY NOW
+        </button>
 
-      {{-- ✅ ADD TO CART (AJAX ไม่เปลี่ยนหน้า) --}}
-      @if(Route::has('cart.add'))
+        <button disabled
+          class="px-8 py-3 rounded text-gray-400 font-semibold bg-gray-200 border border-gray-300 cursor-not-allowed flex items-center justify-center gap-2">
+          Add To Cart
+        </button>
+      @else
+        {{-- ✅ BUY NOW --}}
+        <a id="buyNowLink"
+          href="{{ route('checkout.buy', $product) }}?qty={{ session('suggested_qty', $qty ?? 1) }}&return={{ urlencode($return ?? url()->current()) }}"
+          class="px-8 py-3 rounded text-white font-semibold shadow-sm transition-all duration-300
+                 bg-[#6B3E2E] hover:bg-[#8B5E45] border border-[#6B3E2E]
+                 flex items-center justify-center gap-2">
+          BUY NOW
+        </a>
+
+        {{-- ✅ Add to Cart --}}
         <button type="button"
                 id="btnAddToCart"
                 onclick="addProductToCart({{ $product->id }})"
@@ -88,6 +99,7 @@
       @endif
     </div>
 
+    {{-- ✅ Warning for invalid qty --}}
     <p id="qtyWarn" class="hidden text-sm text-rose-600 mt-3">
       ❗ The selected quantity exceeds available stock
     </p>
@@ -130,7 +142,7 @@
   </div>
 </div>
 
-{{-- ✅ Logic --}}
+{{-- ✅ Script --}}
 <script>
 function clampQty(q) {
   const stock = parseInt(document.getElementById('qty').dataset.stock || '0', 10);
@@ -150,7 +162,7 @@ function syncQty(val) {
   const addBtn = document.getElementById('btnAddToCart');
   const warn = document.getElementById('qtyWarn');
   const disabled = val > stock || stock <= 0;
-  addBtn.disabled = disabled;
+  if (addBtn) addBtn.disabled = disabled;
   warn.classList.toggle('hidden', !disabled);
 }
 
@@ -164,12 +176,14 @@ function chg(d) {
 
 document.addEventListener('DOMContentLoaded', () => {
   const el = document.getElementById('qty');
-  el.addEventListener('input', () => {
-    const val = clampQty(parseInt(el.value || '1', 10) || 1);
-    el.value = val;
-    syncQty(val);
-  });
-  syncQty(parseInt(el.value || '1', 10));
+  if (el) {
+    el.addEventListener('input', () => {
+      const val = clampQty(parseInt(el.value || '1', 10) || 1);
+      el.value = val;
+      syncQty(val);
+    });
+    syncQty(parseInt(el.value || '1', 10));
+  }
 
   const box = document.getElementById('detailBox');
   const arrow = document.getElementById('arrow');
@@ -180,16 +194,52 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+// ✅ ฟังก์ชันเพิ่มสินค้า (ตัวเดียวเท่านั้น)
 async function addProductToCart(productId) {
   const qty = parseInt(document.getElementById('qty').value || '1', 10);
+  const stock = parseInt(document.getElementById('qty').dataset.stock || '0', 10);
+
+  if (stock <= 0) {
+    showToast?.("This product is sold out.", "error");
+    return;
+  }
+
   try {
+    // ตรวจสอบจำนวนในตะกร้า
+    const checkRes = await fetch(`/cart/get-item/${productId}`, {
+      headers: { "X-Requested-With": "XMLHttpRequest" }
+    });
+
+    if (checkRes.status === 401) {
+      window.location.href = "{{ route('login') }}";
+      return;
+    }
+
+    let currentQty = 0;
+    if (checkRes.ok) {
+      const checkData = await checkRes.json();
+      currentQty = parseInt(checkData.current_qty || 0, 10);
+    }
+
+    const totalAfterAdd = currentQty + qty;
+    if (totalAfterAdd > stock) {
+      const remain = Math.max(0, stock - currentQty);
+      if (remain <= 0) {
+        showToast?.(`You already added all ${stock} items to your cart.`, "warning");
+      } else {
+        showToast?.(`You can only add ${remain} more item${remain > 1 ? 's' : ''}.`, "warning");
+      }
+      return;
+    }
+
+    // เพิ่มสินค้าจริง
     const res = await fetch("/cart/add", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Accept": "application/json",
         "X-Requested-With": "XMLHttpRequest",
-        "X-CSRF-TOKEN": document.querySelector('meta[name=\"csrf-token\"]').content,
+        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
       },
       body: JSON.stringify({ product_id: productId, qty }),
     });
@@ -209,27 +259,18 @@ async function addProductToCart(productId) {
         setTimeout(() => cartCount.classList.remove("scale-125"), 200);
       }
 
-      if (typeof showToast === "function") showToast("Added to cart!");
-      else alert("Added to cart!");
+      // ✅ ใช้ toast จาก header (หายแน่หลัง 2 วิ)
+      setTimeout(() => showToast?.("Item added to cart successfully!", "success"), 100);
+
     } else {
-      alert("เกิดข้อผิดพลาดในการเพิ่มสินค้า");
+      showToast?.("Unable to add this item.", "error");
     }
+
   } catch (err) {
     console.error("Add to cart failed:", err);
-    alert("เกิดข้อผิดพลาดในการเพิ่มสินค้า");
+    showToast?.("Please login before adding items to cart.", "error");
   }
 }
 </script>
 
-{{-- ✅ Hide number input arrows --}}
-<style>
-  input[type=number]::-webkit-inner-spin-button,
-  input[type=number]::-webkit-outer-spin-button {
-    -webkit-appearance: none;
-    margin: 0;
-  }
-  input[type=number] {
-    -moz-appearance: textfield;
-  }
-</style>
 @endsection

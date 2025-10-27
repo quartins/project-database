@@ -93,6 +93,7 @@
 
 {{-- Script logic --}}
 @section('scripts')
+@section('scripts')
 <script>
 document.addEventListener("DOMContentLoaded", () => {
     const subtotalEl = document.getElementById("subtotal");
@@ -146,9 +147,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     }
 
-    /** 🧾 ฟังก์ชันส่งข้อมูล checkout */
+    /** ✅ ตรวจสอบ stock ก่อน checkout */
     if (checkoutForm) {
-        checkoutForm.addEventListener("submit", (e) => {
+        checkoutForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
             const selected = [];
             document.querySelectorAll(".cart-item").forEach(item => {
                 const chk = item.querySelector(".item-check");
@@ -160,18 +163,33 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             if (selected.length === 0) {
-                e.preventDefault();
                 alert("Please select at least one item to proceed.");
                 return;
             }
 
-            if (!itemsField) {
-                e.preventDefault();
-                alert("Missing hidden input field.");
-                return;
-            }
+            try {
+                const res = await fetch("/cart/check-stock", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": document.querySelector('meta[name=\"csrf-token\"]').content
+                    },
+                    body: JSON.stringify({ items: selected })
+                });
 
-            itemsField.value = JSON.stringify(selected);
+                const data = await res.json();
+
+                if (!res.ok || data.error) {
+                    alert(data.message || "Some items exceed available stock. Please adjust your cart.");
+                    return;
+                }
+
+                itemsField.value = JSON.stringify(selected);
+                checkoutForm.submit();
+            } catch (err) {
+                alert("Unable to verify stock. Please try again later.");
+                console.error(err);
+            }
         });
     }
 
@@ -183,7 +201,17 @@ document.addEventListener("DOMContentLoaded", () => {
         const productId = item.dataset.id;
         let qty = parseInt(item.querySelector(".quantity").textContent);
 
-        if (e.target.classList.contains("plus-btn")) qty++;
+        // ✅ ตรวจ stock ก่อนเพิ่ม
+        if (e.target.classList.contains("plus-btn")) {
+            const resStock = await fetch(`/cart/get-stock/${productId}`);
+            const data = await resStock.json();
+            if (qty + 1 > data.stock_qty) {
+                alert(`Sorry, only ${data.stock_qty} items left in stock.`);
+                return;
+            }
+            qty++;
+        }
+
         if (e.target.classList.contains("minus-btn")) {
             if (qty > 1) qty--;
             else {
@@ -191,7 +219,7 @@ document.addEventListener("DOMContentLoaded", () => {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json",
-                        "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+                        "X-CSRF-TOKEN": document.querySelector('meta[name=\"csrf-token\"]').content
                     },
                     body: JSON.stringify({ product_id: productId })
                 });
@@ -203,54 +231,29 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         if (e.target.classList.contains("remove-btn")) {
-    e.preventDefault();
-    const res = await fetch("/cart/remove", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify({ product_id: productId })
-    });
+            e.preventDefault();
+            const res = await fetch("/cart/remove", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": document.querySelector('meta[name=\"csrf-token\"]').content
+                },
+                body: JSON.stringify({ product_id: productId })
+            });
 
-    if (!res.ok) return;
-
-        const data = await res.json();
-
-        item.classList.add("opacity-0", "translate-x-4", "transition-all", "duration-300");
-        setTimeout(() => {
+            if (!res.ok) return;
             item.remove();
-            const remaining = document.querySelectorAll(".cart-item").length;
-            if (remaining === 0) {
-                cartContainer.innerHTML = `
-                    <div class="text-center text-gray-500 italic py-10 bg-pink-50 rounded-lg shadow">
-                        Your cart is empty
-                    </div>`;
-            }
-
-            // ✅ อัปเดตเลขหัว My Cart และไอคอนตะกร้าแบบทันที
-            if (typeof data.cart_count !== "undefined") {
-                if (cartCountEl) {
-                    cartCountEl.textContent = data.cart_count;
-                    cartCountEl.classList.toggle("hidden", data.cart_count <= 0);
-                }
-                myCartTitle.textContent = `My Cart (${data.cart_count})`;
-            } else {
-                updateCartCount();
-            }
-
+            updateCartCount();
             calcSubtotal();
-        }, 300);
+            return;
+        }
 
-        return;
-    }
-
-
+        // ✅ update quantity
         const res = await fetch("/cart/update", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+                "X-CSRF-TOKEN": document.querySelector('meta[name=\"csrf-token\"]').content
             },
             body: JSON.stringify({ product_id: productId, quantity: qty })
         });
@@ -262,13 +265,11 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 
-    /** 🧷 checkbox select all */
     selectAll.addEventListener("change", () => {
         document.querySelectorAll(".item-check").forEach(chk => chk.checked = selectAll.checked);
         calcSubtotal();
     });
 
-    /** 🧷 checkbox เดี่ยว */
     document.querySelectorAll(".item-check").forEach(chk =>
         chk.addEventListener("change", () => {
             calcSubtotal();
@@ -278,16 +279,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
     updateCartCount();
     calcSubtotal();
-
-    // ✅ รีเซ็ต checkbox เมื่อกด back กลับมาหน้า cart
-    window.addEventListener("pageshow", (event) => {
-        if (event.persisted || performance.getEntriesByType("navigation")[0].type === "back_forward") {
-            document.querySelectorAll(".item-check").forEach(chk => chk.checked = false);
-            selectAll.checked = false;
-            subtotalEl.textContent = "฿ 0.0";
-            totalEl.textContent = "฿ 0.0 THB";
-        }
-    });
 });
 </script>
 @endsection
