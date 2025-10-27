@@ -173,14 +173,14 @@ class ProductSeeder extends Seeder
                 'category_id' => 2,
             ],
              [
-                'name' => 'My Melody Plush ',
+                'name' => 'My Melody Elegant Lolita Figurine ',
                 'price' => 480.0,
                 'stock_qty' => 20,
                 'image_url' => 'collection/mymelody/mymelody4.png',
                 'category_id' => 2,
             ],
              [
-                'name' => 'My Melody Elegant Lolita Figurine ',
+                'name' => 'My Melody Chocolate Dream Plush Pouch ',
                 'price' => 550.0,
                 'stock_qty' => 20,
                 'image_url' => 'collection/mymelody/mymelody5.png',
