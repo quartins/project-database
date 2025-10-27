@@ -1,16 +1,35 @@
-@extends('layouts.app')   
-@section('content')
-<div class="min-h-[60vh] flex flex-col items-center justify-center text-center space-y-6">
-  <div class="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" class="w-10 h-10 text-green-600 fill-current">
-      <path d="M9 16.2 4.8 12l-1.4 1.4L9 19l12-12-1.4-1.4z"/>
-    </svg>
-  </div>
-  <h1 class="text-4xl font-semibold">Thank you!</h1>
-  <p class="text-gray-600 text-lg">Your order was completed successfully.</p>
+@extends('layouts.app')
 
-  <a href="{{ url('/') }}" class="mt-4 inline-block bg-[#5a362e] text-white px-6 py-3 rounded-lg hover:opacity-90">
-    Continue shopping
-  </a>
+@section('content')
+{{-- 
+    เราใช้ min-h-[calc(100vh-...)] เพื่อให้เนื้อหาอยู่กลางจอ
+    (ลบความสูงของ header และ footer ออก)
+--}}
+
+<div class="bg-gradient-to-b from-pink-50 to-yellow-50 min-h-screen py-12 flex items-center justify-center">
+    <div class="container mx-auto max-w-lg px-4 text-center">
+
+        {{-- 1. Green Checkmark SVG (ไม่ต้องใช้รูป) --}}
+        <svg class="w-20 h-20 text-green-500 mx-auto mb-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+        </svg>
+
+        {{-- 2. Thank You Text --}}
+        <h1 class="text-4xl font-bold text-gray-800 mb-4">
+            Thank you!
+        </h1>
+
+        <p class="text-lg text-gray-600 mb-12">
+            Your order was completed successfully
+        </p>
+        
+        <a href="{{ url('/') }}" class="mt-4 inline-block bg-[#5a362e] text-white px-6 py-3 rounded-lg hover:opacity-90">
+          Continue shopping
+        </a>
+
+
+        <img src="{{ asset('images/sanrio.png') }}" alt="Thank you characters" class="w-48 h-auto mx-auto mb-12">
+       
+    </div>
 </div>
 @endsection
