@@ -10,7 +10,7 @@ class PromotionSeeder extends Seeder
 {
     public function run(): void
     {
-        // โปรโค้ดลดทุกสินค้า 15%
+        //  ลดทุกสินค้า 15%
         $chamora = Promotion::create([
             'code' => 'chamora',
             'name' => 'Chamora 15% Off All Products',
@@ -19,19 +19,39 @@ class PromotionSeeder extends Seeder
             'is_active' => true,
         ]);
 
-        // โปรลดเฉพาะ Hirono และ Kuromi
-        $collection10 = Promotion::create([
-            'code' => 'collection10',
-            'name' => 'Hirono & Kuromi 10% Off',
+        //  Kuromi Only
+        $kurolove = Promotion::create([
+            'code' => 'kurolove',
+            'name' => 'Kuromi Collection 10% Off',
             'discount_percent' => 10,
             'applies_to' => 'collection',
             'is_active' => true,
         ]);
 
-        // collecotion10 ใช้กับ Category Hirono และ Kuromi
+        //  Hirono Only
+        $prince10 = Promotion::create([
+            'code' => 'prince10',
+            'name' => 'Hirono Collection 10% Off',
+            'discount_percent' => 10,
+            'applies_to' => 'collection',
+            'is_active' => true,
+        ]);
+
+        //  Kuromi + Hirono
+        $friendship10 = Promotion::create([
+            'code' => 'friendship10',
+            'name' => 'Friendship Combo 10% Off (Kuromi + Hirono)',
+            'discount_percent' => 10,
+            'applies_to' => 'combo',
+            'is_active' => true,
+        ]);
+
+        // Map collection → promotion
         DB::table('promotion_collections')->insert([
-            ['promotion_id' => $collection10->id, 'category_id' => 3], // Kuromi
-            ['promotion_id' => $collection10->id, 'category_id' => 4], // Hirono
+            ['promotion_id' => $kurolove->id, 'category_id' => 3], // Kuromi
+            ['promotion_id' => $prince10->id, 'category_id' => 4], // Hirono
+            ['promotion_id' => $friendship10->id, 'category_id' => 3], // Kuromi (part of combo)
+            ['promotion_id' => $friendship10->id, 'category_id' => 4], // Hirono (part of combo)
         ]);
     }
 }

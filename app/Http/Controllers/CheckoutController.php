@@ -151,34 +151,82 @@ class CheckoutController extends Controller
             $msgKey = 'coupon_info';
             $msgVal = 'นำคูปองออกแล้ว';
 
+            /* -------------------------------------------------------------------------- */
+            /*  1. โค้ด chamora — ลดทุกสินค้า 15%                                      */
+            /* -------------------------------------------------------------------------- */
             if ($code === 'chamora') {
-                // ✅ ลดทุกสินค้า 15%
                 $order->discount = round($order->subtotal * 0.15, 2);
                 $msgKey = 'coupon_ok';
-                $msgVal = 'ใช้โค้ด chamora สำเร็จ — ลด 15% ของค่าสินค้าทั้งหมด';
-            } 
-            elseif ($code === 'collection10') {
-                // ✅ ลดเฉพาะหมวดหมู่ 3 (Kuromi) และ 4 (Hirono)
-                $eligibleIds = [3, 4];
-                $eligibleTotal = 0;
+                $msgVal = 'ใช้โค้ด CHAMORA สำเร็จ — ลด 15% ของค่าสินค้าทั้งหมด ';
+            }
 
+            /* -------------------------------------------------------------------------- */
+            /*  2. โค้ดเฉพาะคอลเลกชัน (Kuromi / Hirono / Friendship)               */
+            /* -------------------------------------------------------------------------- */
+            elseif (in_array($code, ['kurolove', 'prince10', 'friendship10'])) {
+
+                $eligibleTotal = 0;
+                $hasKuromi = false;
+                $hasHirono = false;
+
+                //  ตรวจสอบสินค้าทั้งหมดในคำสั่งซื้อ
                 foreach ($order->items as $item) {
-                    if (in_array($item->product->category_id, $eligibleIds)) {
+                    $cat = $item->product->category_id;
+
+                    // หมวดหมู่สินค้า
+                    if ($cat === 3) $hasKuromi = true; // Kuromi
+                    if ($cat === 4) $hasHirono = true; // Hirono
+
+                    // kurolove → ลดเฉพาะ Kuromi
+                    if ($code === 'kurolove' && $cat === 3) {
+                        $eligibleTotal += $item->unit_price * $item->qty;
+                    }
+
+                    // prince10 → ลดเฉพาะ Hirono
+                    if ($code === 'prince10' && $cat === 4) {
+                        $eligibleTotal += $item->unit_price * $item->qty;
+                    }
+
+                    // friendship10 → ลดเมื่อมีทั้งคู่
+                    if ($code === 'friendship10' && in_array($cat, [3, 4])) {
                         $eligibleTotal += $item->unit_price * $item->qty;
                     }
                 }
 
+                //  เงื่อนไขพิเศษ: friendship10 ต้องมีทั้งคู่
+                if ($code === 'friendship10' && !($hasKuromi && $hasHirono)) {
+                    $eligibleTotal = 0; // ไม่มีครบ → ใช้ไม่ได้
+                }
+
+                //  ถ้ามีสินค้าที่เข้าเงื่อนไข
                 if ($eligibleTotal > 0) {
                     $order->discount = round($eligibleTotal * 0.10, 2);
                     $msgKey = 'coupon_ok';
-                    $msgVal = 'ใช้โค้ด collection10 สำเร็จ — ลด 10% สำหรับสินค้า Kuromi และ Hirono';
+                    $msgVal = match ($code) {
+                        'kurolove'     => 'ใช้โค้ด KUROLOVE สำเร็จ — ลด 10% สำหรับสินค้า Kuromi ',
+                        'prince10'     => 'ใช้โค้ด PRINCE10 สำเร็จ — ลด 10% สำหรับสินค้า Hirono ',
+                        'friendship10' => 'ใช้โค้ด FRIENDSHIP10 สำเร็จ — ลด 10% สำหรับ Kuromi และ Hirono ',
+                    };
                 } else {
-                    // ❌ ไม่มีสินค้าที่ใช้ได้
+                    //  ไม่มีสินค้าที่เข้าเงื่อนไข
                     $msgKey = 'coupon_err';
-                    $msgVal = 'คูปองนี้ใช้ได้เฉพาะกับสินค้า Kuromi และ Hirono เท่านั้น';
+                    $msgVal = match ($code) {
+                        'kurolove'     => 'คูปองนี้ใช้ได้เฉพาะสินค้า Kuromi เท่านั้น ',
+                        'prince10'     => 'คูปองนี้ใช้ได้เฉพาะสินค้า Hirono เท่านั้น ',
+                        'friendship10' => 'คูปองนี้ใช้ได้เมื่อมีสินค้าทั้ง Kuromi และ Hirono ในคำสั่งซื้อ ',
+                    };
                 }
             }
 
+            /* -------------------------------------------------------------------------- */
+            /*  3. ถ้าไม่เจอโค้ดในระบบ                                                */
+            /* -------------------------------------------------------------------------- */
+            elseif (!empty($code)) {
+                $msgKey = 'coupon_err';
+                $msgVal = 'ไม่พบคูปองนี้ในระบบ ';
+            }
+
+            //  คำนวณราคาใหม่และบันทึก
             $order->recalc();
             $order->save();
 
@@ -193,7 +241,7 @@ class CheckoutController extends Controller
             DB::transaction(function () use ($order) {
                 $order->load('items.product');
 
-                // ✅ ตรวจสอบ stock ก่อนหัก
+                //  ตรวจสอบ stock ก่อนหัก
                 foreach ($order->items as $item) {
                     $p = $item->product;
                     if ($p->stock_qty < $item->qty) {
@@ -201,18 +249,18 @@ class CheckoutController extends Controller
                     }
                 }
 
-                // ✅ หัก stock จริง
+                //  หัก stock จริง
                 foreach ($order->items as $item) {
                     $item->product->decrement('stock_qty', $item->qty);
                 }
 
-                // ✅ เปลี่ยนสถานะเป็น pending_payment (รอจ่าย)
+                //  เปลี่ยนสถานะเป็น pending_payment (รอจ่าย)
                 $order->status = 'pending';
                 $order->save();
             });
         }
 
-        // ✅ โหลดข้อมูลสินค้ามาแสดง
+        //  โหลดข้อมูลสินค้ามาแสดง
         $order->load('items.product');
 
         $returnUrl = session("order_return_{$order->id}")
